@@ -9,9 +9,11 @@
 #include <usb.h>
 #include <errno.h>
 #include <wait_bit.h>
+#include <linux/arm-smccc.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>
 #include <usb/ehci-ci.h>
+#include <imx_sip.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
@@ -223,7 +225,7 @@ struct usbnc_regs {
 };
 #endif
 
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_USB_EHCI_MX7)
 struct usbnc_regs {
 	u32 ctrl1;
 	u32 ctrl2;
@@ -240,9 +242,14 @@ struct usbnc_regs {
 
 static void usb_power_config(int index)
 {
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
+	struct usbnc_regs *usbnc = (struct usbnc_regs *)(uintptr_t)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 	void __iomem *phy_cfg2 = (void __iomem *)(&usbnc->phy_cfg2);
+
+	if (is_imx8mm()) {
+		arm_smccc_smc(IMX_SIP_GPC, IMX_SIP_GPC_PM_DOMAIN, 2 + index, 1,
+			      0, 0, 0, 0, NULL);
+	}
 
 	/*
 	 * Clear the ACAENB to enable usb_otg_id detection,
@@ -253,7 +260,7 @@ static void usb_power_config(int index)
 
 int usb_phy_mode(int port)
 {
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
+	struct usbnc_regs *usbnc = (struct usbnc_regs *)(uintptr_t)(USB_BASE_ADDR +
 			(0x10000 * port) + USBNC_OFFSET);
 	void __iomem *status = (void __iomem *)(&usbnc->phy_status);
 	u32 val;
@@ -273,8 +280,8 @@ static void usb_oc_config(int index)
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
-#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP)
+	struct usbnc_regs *usbnc = (struct usbnc_regs *)(uintptr_t)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl1);
 #endif
@@ -372,10 +379,10 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	enum usb_init_type type;
 #if defined(CONFIG_MX6)
 	u32 controller_spacing = 0x200;
-#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP)
 	u32 controller_spacing = 0x10000;
 #endif
-	struct usb_ehci *ehci = (struct usb_ehci *)(USB_BASE_ADDR +
+	struct usb_ehci *ehci = (struct usb_ehci *)(uintptr_t)(USB_BASE_ADDR +
 		(controller_spacing * index));
 	int ret;
 
@@ -397,8 +404,8 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	type = board_usb_phy_mode(index);
 
 	if (hccr && hcor) {
-		*hccr = (struct ehci_hccr *)((uint32_t)&ehci->caplength);
-		*hcor = (struct ehci_hcor *)((uint32_t)*hccr +
+		*hccr = (struct ehci_hccr *)((uintptr_t)&ehci->caplength);
+		*hcor = (struct ehci_hcor *)((uintptr_t)*hccr +
 				HC_LENGTH(ehci_readl(&(*hccr)->cr_capbase)));
 	}
 
@@ -479,6 +486,9 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 	int offset = dev_of_offset(dev), phy_off;
 	u32 val;
 
+	enable_usboh3_clk(1);
+	mdelay(1);
+
 	/*
 	 * About fsl,usbphy, Refer to
 	 * Documentation/devicetree/bindings/usb/ci-hdrc-usb2.txt.
@@ -502,7 +512,7 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 			plat->init_type = USB_INIT_DEVICE;
 		else
 			plat->init_type = USB_INIT_HOST;
-	} else if (is_mx7()) {
+	} else if (is_mx7() || is_imx8mm()) {
 		phy_status = (void __iomem *)(addr +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
@@ -569,7 +579,7 @@ static int ehci_usb_bind(struct udevice *dev)
 	 * With these changes in place, the ad-hoc indexing goes away and
 	 * the driver is fully converted to DT probing.
 	 */
-	u32 controller_spacing = is_mx7() ? 0x10000 : 0x200;
+	u32 controller_spacing = is_mx6() ? 0x200 : 0x10000;
 	fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
 
 	dev->req_seq = (addr - USB_BASE_ADDR) / controller_spacing;
@@ -629,8 +639,8 @@ static int ehci_usb_probe(struct udevice *dev)
 
 	mdelay(10);
 
-	hccr = (struct ehci_hccr *)((uint32_t)&ehci->caplength);
-	hcor = (struct ehci_hcor *)((uint32_t)hccr +
+	hccr = (struct ehci_hccr *)((uintptr_t)&ehci->caplength);
+	hcor = (struct ehci_hcor *)((uintptr_t)hccr +
 			HC_LENGTH(ehci_readl(&(hccr)->cr_capbase)));
 
 	return ehci_register(dev, hccr, hcor, &mx6_ehci_ops, 0, priv->init_type);
@@ -638,6 +648,7 @@ static int ehci_usb_probe(struct udevice *dev)
 
 static const struct udevice_id mx6_usb_ids[] = {
 	{ .compatible = "fsl,imx27-usb" },
+	{ .compatible = "fsl,imx8mm-usb" },
 	{ }
 };
 
