@@ -66,6 +66,7 @@ static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 
 #include <u-boot/crc.h>
 #include <imximage.h>
+#include <linux/kconfig.h>
 
 #ifndef CONFIG_SYS_BARGSIZE
 #define CONFIG_SYS_BARGSIZE 512
@@ -430,7 +431,7 @@ int image_decomp(int comp, ulong load, ulong image_start, int type,
 		else
 			ret = -ENOSPC;
 		break;
-#ifdef CONFIG_GZIP
+#if CONFIG_IS_ENABLED(GZIP) && !defined(USE_HOSTCC)
 	case IH_COMP_GZIP: {
 		ret = gunzip(load_buf, unc_len, image_buf, &image_len);
 		break;
@@ -452,7 +453,7 @@ int image_decomp(int comp, ulong load, ulong image_start, int type,
 		break;
 	}
 #endif /* CONFIG_BZIP2 */
-#ifdef CONFIG_LZMA
+#if CONFIG_IS_ENABLED(LZMA) && !defined(USE_HOSTCC)
 	case IH_COMP_LZMA: {
 		SizeT lzma_len = unc_len;
 
@@ -462,7 +463,7 @@ int image_decomp(int comp, ulong load, ulong image_start, int type,
 		break;
 	}
 #endif /* CONFIG_LZMA */
-#ifdef CONFIG_LZO
+#if CONFIG_IS_ENABLED(LZO) && !defined(USE_HOSTCC)
 	case IH_COMP_LZO: {
 		size_t size = unc_len;
 
@@ -471,7 +472,7 @@ int image_decomp(int comp, ulong load, ulong image_start, int type,
 		break;
 	}
 #endif /* CONFIG_LZO */
-#ifdef CONFIG_LZ4
+#if CONFIG_IS_ENABLED(LZ4) && !defined(USE_HOSTCC)
 	case IH_COMP_LZ4: {
 		size_t size = unc_len;
 
