@@ -128,6 +128,18 @@
 
 #define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
 
+/*
+ * #######################################
+ * ### USB                             ###
+ * #######################################
+ */
+#ifdef CONFIG_USB_EHCI_HCD
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
+#define CONFIG_MXC_USB_PORTSC           (PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CONFIG_MXC_USB_FLAGS            0
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+#endif
+
 /* Monitor Command Prompt */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_CBSIZE		2048

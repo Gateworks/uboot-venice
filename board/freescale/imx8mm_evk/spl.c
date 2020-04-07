@@ -28,6 +28,8 @@ DECLARE_GLOBAL_DATA_PTR;
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
 	switch (boot_dev_spl) {
+	case USB_BOOT:
+		return BOOT_DEVICE_BOARD;
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		return BOOT_DEVICE_MMC1;
@@ -160,6 +162,26 @@ void board_init_f(ulong dummy)
 	spl_dram_init();
 
 	board_init_r(NULL, 0);
+}
+
+void board_boot_order(u32 *spl_boot_list)
+{
+	switch (spl_boot_device()) {
+	case BOOT_DEVICE_BOARD:
+		/*
+		 * If the SPL was loaded via serial loader, we try to get
+		 * U-Boot proper via USB SDP.
+		 */
+		spl_boot_list[0] = BOOT_DEVICE_BOARD;
+		break;
+	default:
+		/*
+		 * Else, we try to load it from SD-card, eMMC or SPI NOR.
+		 */
+		spl_boot_list[0] = BOOT_DEVICE_MMC2;
+		spl_boot_list[1] = BOOT_DEVICE_MMC1;
+		spl_boot_list[2] = BOOT_DEVICE_SPI;
+	}
 }
 
 int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
