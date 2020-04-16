@@ -667,7 +667,6 @@ int gsc_init(void)
 #endif
 
 	gsc_boot_wd_disable();
-//	gsc_hwmon();
 
 	return 0;
 }
@@ -752,7 +751,10 @@ const char *gsc_get_dtb_name(int level)
 	}
 	return file;
 }
+#endif
 
+//#if defined(CONFIG_CMD_GSC) && !defined(CONFIG_SPL_BUILD)
+#if !defined(CONFIG_SPL_BUILD)
 static int gsc_sleep(unsigned long secs)
 {
 	unsigned char reg;
@@ -800,4 +802,30 @@ err:
 	printf("i2c error\n");
 	return ret;
 }
-#endif
+
+static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc < 2)
+//		return gsc_info(1);
+		return CMD_RET_USAGE;
+
+	if (strcasecmp(argv[1], "sleep") == 0) {
+		if (argc < 4)
+			return CMD_RET_USAGE;
+		if (!gsc_sleep(simple_strtoul(argv[2], NULL, 10)))
+			return CMD_RET_SUCCESS;
+	}
+	else if (strcasecmp(argv[1], "hwmon") == 0) {
+		if (!gsc_hwmon())
+			return CMD_RET_SUCCESS;
+	}
+
+	return CMD_RET_USAGE;
+}
+
+U_BOOT_CMD(
+	gsc, 4, 1, do_gsc, "Gateworks System Controller",
+	"[sleep <secs>]|[hwmon]\n"
+	);
+
+#endif /* CONFIG_CMD_GSC */
