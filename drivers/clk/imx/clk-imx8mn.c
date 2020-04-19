@@ -83,6 +83,10 @@ static const char *imx8mn_enet_axi_sels[] = {"clock-osc-24m", "sys_pll1_266m", "
 static const char *imx8mn_nand_usdhc_sels[] = {"clock-osc-24m", "sys_pll1_266m", "sys_pll1_800m", "sys_pll2_200m",
 					       "sys_pll1_133m", "sys_pll3_out", "sys_pll2_250m", "audio_pll1_out", };
 
+static const char * const imx8mn_usb_bus_sels[] = {"clock-osc-24m", "sys_pll2_500m", "sys_pll1_800m",
+						"sys_pll2_100m", "sys_pll2_200m", "clk_ext2",
+						"clk_ext4", "audio_pll2_out", };
+
 static const char *imx8mn_usdhc1_sels[] = {"clock-osc-24m", "sys_pll1_400m", "sys_pll1_800m", "sys_pll2_500m",
 					   "sys_pll3_out", "sys_pll1_266m", "audio_pll2_out", "sys_pll1_100m", };
 
@@ -318,6 +322,8 @@ static int imx8mn_clk_probe(struct udevice *dev)
 	       imx8m_clk_composite_critical("nand_usdhc_bus",
 					    imx8mn_nand_usdhc_sels,
 					    base + 0x8900));
+	clk_dm(IMX8MN_CLK_USB_BUS,
+		imx8m_clk_composite("usb_bus", imx8mn_usb_bus_sels, base + 0x8b80));
 
 	/* IP */
 	clk_dm(IMX8MN_CLK_USDHC1,
@@ -339,7 +345,6 @@ static int imx8mn_clk_probe(struct udevice *dev)
 	clk_dm(IMX8MN_CLK_USDHC3,
 	       imx8m_clk_composite("usdhc3", imx8mn_usdhc3_sels,
 				   base + 0xbc80));
-
 	clk_dm(IMX8MN_CLK_I2C1_ROOT,
 	       imx_clk_gate4("i2c1_root_clk", "i2c1", base + 0x4170, 0));
 	clk_dm(IMX8MN_CLK_I2C2_ROOT,
