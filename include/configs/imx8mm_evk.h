@@ -9,6 +9,17 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+#ifndef CONFIG_SPL_BUILD
+#define BOOT_TARGET_DEVICES(func) \
+	func(MMC, mmc, 1) \
+	func(MMC, mmc, 2) \
+	func(USB, usb, 0) \
+	func(USB, usb, 1) \
+	func(PXE, pxe, na)
+
+#include <config_distro_bootcmd.h>
+#endif
+
 #ifdef CONFIG_SECURE_BOOT
 #define CONFIG_CSF_SIZE			SZ_8K
 #endif
@@ -38,71 +49,23 @@
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"script=boot.scr\0" \
-	"image=Image\0" \
-	"console=ttymxc1,115200\0" \
-	"fdt_addr=0x43000000\0"			\
-	"fdt_high=0xffffffffffffffff\0"		\
-	"boot_fit=no\0" \
-	"fdt_file=imx8mm-evk.dtb\0" \
-	"initrd_addr=0x43800000\0"		\
-	"initrd_high=0xffffffffffffffff\0" \
-	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
-	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
-	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
-	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
-	"bootscript=echo Running bootscript from mmc ...; " \
-		"source\0" \
-	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
-	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
-		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
-			"bootm ${loadaddr}; " \
-		"else " \
-			"if run loadfdt; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"echo WARN: Cannot load the DT; " \
-			"fi; " \
-		"fi;\0" \
-	"netargs=setenv bootargs console=${console} " \
-		"root=/dev/nfs " \
-		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
-	"netboot=echo Booting from net ...; " \
-		"run netargs;  " \
-		"if test ${ip_dyn} = yes; then " \
-			"setenv get_cmd dhcp; " \
-		"else " \
-			"setenv get_cmd tftp; " \
-		"fi; " \
-		"${get_cmd} ${loadaddr} ${image}; " \
-		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
-			"bootm ${loadaddr}; " \
-		"else " \
-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"echo WARN: Cannot load the DT; " \
-			"fi; " \
-		"fi;\0"
-
-#define CONFIG_BOOTCOMMAND \
-	   "mmc dev ${mmcdev}; if mmc rescan; then " \
-		   "if run loadbootscript; then " \
-			   "run bootscript; " \
-		   "else " \
-			   "if run loadimage; then " \
-				   "run mmcboot; " \
-			   "else run netboot; " \
-			   "fi; " \
-		   "fi; " \
-	   "fi;"
+	"fdt_high=0xffffffff\0" \
+	"initrd_high=0xffffffff\0" \
+	"fdt_addr_r=0x42000000\0" \
+	"kernel_addr_r=0x43000000\0" \
+	"ramdisk_addr_r=0x43000000\0" \
+	"pxefile_addr_r=0x43000000\0" \
+	"scriptaddr=0x43000000\0" \
+	"ipaddr=192.168.1.22\0" \
+	"serverip=192.168.1.146\0" \
+	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
+	"update_firmware=tftp $loadaddr venice/flash.bin && setexpr blkcnt $filesize + 0x1ff && setexpr blkcnt $blkcnt / 0x200 && mmc dev 2 && mmc write $loadaddr 0x42 $blkcnt\0" \
+	"boot_net=setenv bootargs 'console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 memtest=1 debug'; tftp $loadaddr venice/Image && booti $loadaddr - $fdtcontroladdr\0" \
+	"update_all=tftp $loadaddr venice/ubuntu-focal.gz && gzwrite mmc 2 $loadaddr $filesize\0" \
+        BOOTENV
 
 /* Link Definitions */
-#define CONFIG_LOADADDR			0x40480000
-
+#define CONFIG_LOADADDR			0x40200000
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 #define CONFIG_SYS_INIT_RAM_ADDR        0x40000000
@@ -114,7 +77,6 @@
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		SZ_32M
@@ -122,6 +84,7 @@
 #define CONFIG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                      0x40000000
 #define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
+#define CONFIG_SYS_BOOTM_LEN		SZ_64M
 
 #define CONFIG_SYS_MEMTEST_START	PHYS_SDRAM
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_SIZE >> 1))
@@ -149,8 +112,6 @@
 					sizeof(CONFIG_SYS_PROMPT) + 16)
 
 /* USDHC */
-#define CONFIG_FSL_USDHC
-
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
@@ -158,12 +119,10 @@
 
 #define CONFIG_SYS_I2C_SPEED		100000
 
-#define CONFIG_ETHPRIME                 "FEC"
+#define CONFIG_ETHPRIME                 "eth0"
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          0
 #define FEC_QUIRK_ENET_MAC
-
-#define IMX_FEC_BASE			0x30BE0000
 
 #endif

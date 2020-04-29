@@ -35,6 +35,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 		return BOOT_DEVICE_MMC1;
 	case SD3_BOOT:
 	case MMC3_BOOT:
+		//return BOOT_DEVICE_MMC1;
 		return BOOT_DEVICE_MMC2;
 	default:
 		return BOOT_DEVICE_NONE;
@@ -178,8 +179,8 @@ void board_boot_order(u32 *spl_boot_list)
 		/*
 		 * Else, we try to load it from SD-card, eMMC or SPI NOR.
 		 */
-		spl_boot_list[0] = BOOT_DEVICE_MMC2;
-		spl_boot_list[1] = BOOT_DEVICE_MMC1;
+		spl_boot_list[0] = BOOT_DEVICE_MMC1;
+		spl_boot_list[1] = BOOT_DEVICE_MMC2;
 		spl_boot_list[2] = BOOT_DEVICE_SPI;
 	}
 }

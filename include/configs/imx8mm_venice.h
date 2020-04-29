@@ -59,6 +59,9 @@
 	"ipaddr=192.168.1.22\0" \
 	"serverip=192.168.1.146\0" \
 	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
+	"update_firmware=tftp $loadaddr venice/flash.bin && setexpr blkcnt $filesize + 0x1ff && setexpr blkcnt $blkcnt / 0x200 && mmc dev 2 && mmc write $loadaddr 0x42 $blkcnt\0" \
+	"boot_net=setenv bootargs 'console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 memtest=1 debug'; tftp $loadaddr venice/Image && booti $loadaddr - $fdtcontroladdr\0" \
+	"update_all=tftp $loadaddr venice/ubuntu-focal.gz && gzwrite mmc 2 $loadaddr $filesize\0" \
         BOOTENV
 
 /* Link Definitions */
