@@ -6,6 +6,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <hang.h>
+#include <i2c.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/mach-imx/iomux-v3.h>
@@ -80,6 +81,107 @@ int board_early_init_f(void)
 	return 0;
 }
 
+/* MP5416 registers */
+enum {
+	MP5416_CTL0		= 0x00,
+	MP5416_CTL1		= 0x01,
+	MP5416_CTL2		= 0x02,
+	MP5416_ILIMIT		= 0x03,
+	MP5416_VSET_SW1		= 0x04,
+	MP5416_VSET_SW2		= 0x05,
+	MP5416_VSET_SW3		= 0x06,
+	MP5416_VSET_SW4		= 0x07,
+	MP5416_VSET_LDO2	= 0x08,
+	MP5416_VSET_LDO3	= 0x09,
+	MP5416_VSET_LDO4	= 0x0a,
+	MP5416_VSET_LDO5	= 0x0b,
+	MP5416_STATUS1		= 0x0d,
+	MP5416_STATUS2		= 0x0e,
+	MP5416_STATUS3		= 0x0f,
+	MP5416_ID2		= 0x11,
+	MP5416_NUM_OF_REGS	= 0x12,
+};
+
+#define MP5416_VSET_EN          BIT(7)
+
+static int power_init(void)
+{
+        struct udevice *dev;
+        int ret;
+	int slave = 0x69;
+	int busno = 1;
+	unsigned char reg;
+
+#ifdef CONFIG_SPL_BUILD
+        ret = i2c_get_chip_for_busnum(busno + 1, slave, 1, &dev);
+//printf("i2c%d@0x%2x: %d\n", busno, slave, ret);
+        if (ret)
+                return ret;
+#else
+        struct udevice *bus;
+
+        busno--;
+
+        ret = uclass_get_device_by_seq(UCLASS_I2C, busno, &bus);
+        if (ret) {
+                printf("i2c%d: no bus %d\n", busno + 1, ret);
+                return ret;
+        }
+        ret = i2c_get_chip(bus, slave, 1, &dev);
+        if (ret) {
+                printf("i2c%d@0x%02x: no chip %d\n", busno + 1, slave, ret);
+                return ret;
+        }
+#endif
+
+	/* configure MP5416 PMIC */
+#define MP5416_VSET_SW1_GVAL(x) (((x & 0x7f)*12500)+600000)
+#define MP5416_VSET_SW2_GVAL(x) (((x & 0x7f)*25000)+800000)
+#define MP5416_VSET_SW3_GVAL(x) (((x & 0x7f)*12500)+600000)
+#define MP5416_VSET_SW4_GVAL(x) (((x & 0x7f)*25000)+800000)
+#define MP5416_VSET_LDO_GVAL(x) (((x & 0x7f)*25000)+800000)
+#define MP5416_VSET_LDO_SVAL(x) (((x & 0x7f)*25000)+800000)
+#define MP5416_VSET_SW1_SVAL(x) ((x-600000)/12500)
+#define MP5416_VSET_SW2_SVAL(x) ((x-800000)/25000)
+#define MP5416_VSET_SW3_SVAL(x) ((x-600000)/12500)
+#define MP5416_VSET_SW4_SVAL(x) ((x-800000)/25000)
+	puts("PMIC    : MP5416\n");
+	/* set SW3 to 0.9V for 1.6GHz */
+	reg = BIT(7) | MP5416_VSET_SW3_SVAL(900000);
+	ret = dm_i2c_write(dev, MP5416_VSET_SW3, &reg, 1);
+	/* read rails */
+/*
+        ret = dm_i2c_read(dev, MP5416_VSET_SW1, &reg, 1);
+	printf("VDD_0P95: %d.%02dV\n", MP5416_VSET_SW1_GVAL(reg) / 1000000,
+		MP5416_VSET_SW1_GVAL(reg) % 1000000);
+        ret = dm_i2c_read(dev, MP5416_VSET_SW2, &reg, 1);
+	printf("VDD_SOC : %d.%02dV\n", MP5416_VSET_SW2_GVAL(reg) / 1000000,
+		MP5416_VSET_SW2_GVAL(reg) % 1000000);
+*/
+        ret = dm_i2c_read(dev, MP5416_VSET_SW3, &reg, 1);
+	printf("VDD_ARM : %d.%02dV\n", MP5416_VSET_SW3_GVAL(reg) / 1000000,
+		MP5416_VSET_SW3_GVAL(reg) % 1000000);
+/*
+        ret = dm_i2c_read(dev, MP5416_VSET_SW4, &reg, 1);
+	printf("VDD_1P8 : %d.%02dV\n", MP5416_VSET_SW4_GVAL(reg) / 1000000,
+		MP5416_VSET_SW4_GVAL(reg) % 1000000);
+        ret = dm_i2c_read(dev, MP5416_VSET_LDO2, &reg, 1);
+	printf("VDD_1P8 : %d.%02dV\n", MP5416_VSET_LDO_GVAL(reg) / 1000000,
+		MP5416_VSET_LDO_GVAL(reg) % 1000000);
+        ret = dm_i2c_read(dev, MP5416_VSET_LDO3, &reg, 1);
+	printf("VDD_0P8 : %d.%02dV\n", MP5416_VSET_LDO_GVAL(reg) / 1000000,
+		MP5416_VSET_LDO_GVAL(reg) % 1000000);
+        ret = dm_i2c_read(dev, MP5416_VSET_LDO4, &reg, 1);
+	printf("VDD_0P9 : %d.%02dV\n", MP5416_VSET_LDO_GVAL(reg) / 1000000,
+		MP5416_VSET_LDO_GVAL(reg) % 1000000);
+        ret = dm_i2c_read(dev, MP5416_VSET_LDO5, &reg, 1);
+	printf("VDD_1P8 : %d.%02dV\n", MP5416_VSET_LDO_GVAL(reg) / 1000000,
+		MP5416_VSET_LDO_GVAL(reg) % 1000000);
+*/
+
+	return 0;
+}
+
 void board_init_f(ulong dummy)
 {
 	struct udevice *dev;
@@ -116,6 +218,9 @@ void board_init_f(ulong dummy)
 
 	/* GSC */
 	gsc_init();
+
+	/* PMIC */
+	power_init();
 
 	/* DDR initialization */
 	spl_dram_init();
