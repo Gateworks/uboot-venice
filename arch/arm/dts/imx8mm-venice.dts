@@ -13,6 +13,10 @@
 	model = "Gateworks Venice i.MX8MM board";
 	compatible = "gw,imx8mm-venice", "fsl,imx8mm";
 
+	aliases {
+		ethernet1 = &eth1;
+	};
+
 	chosen {
 		stdout-path = &uart2;
 	};
@@ -423,6 +427,24 @@
 	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
 	ext_osc = <1>;
 	status = "okay";
+
+	pcie@0,0 {
+		reg = <0x0000 0 0 0 0>;
+
+		pcie@1,0 {
+			reg = <0x0000 0 0 0 0>;
+
+			pcie@2,4 {
+				reg = <0x2000 0 0 0 0>;
+
+				eth1: pcie@6,0 {
+					reg = <0x0000 0 0 0 0>;
+
+					local-mac-address = [00 00 00 00 00 00];
+				};
+			};
+		};
+	};
 };
 
 &sai3 {
