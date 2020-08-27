@@ -24,6 +24,9 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 
+#include <power/pmic.h>
+#include <power/bd71837.h>
+
 #include "gsc.h"
 #include "lpddr4_timing.h"
 
@@ -129,6 +132,7 @@ static int power_init(void)
 {
         struct udevice *dev;
         int ret;
+#ifndef CONFIG_SPL_DM_PMIC_BD71837
 	int slave = 0x69;
 	int busno = 1;
 	unsigned char reg;
@@ -166,7 +170,7 @@ static int power_init(void)
 #define MP5416_VSET_SW3_SVAL(x) ((x-600000)/12500)
 #define MP5416_VSET_SW4_SVAL(x) ((x-800000)/25000)
 	puts("PMIC    : MP5416\n");
-	/* set SW3 to 0.92V for 1.6GHz */
+	/* set VDD_ARM SW3 to 0.92V for 1.6GHz */
 	reg = BIT(7) | MP5416_VSET_SW3_SVAL(920000);
 	ret = dm_i2c_write(dev, MP5416_VSET_SW3, &reg, 1);
 	/* read rails */
@@ -198,6 +202,39 @@ static int power_init(void)
 	printf("VDD_1P8 : %d.%02dV\n", MP5416_VSET_LDO_GVAL(reg) / 1000000,
 		MP5416_VSET_LDO_GVAL(reg) % 1000000);
 */
+	puts("PMIC    : MP5416\n");
+#else
+	ret = pmic_get("pmic@4b", &dev);
+	if (ret == -ENODEV) {
+		puts("No pmic\n");
+		return 0;
+	}
+	if (ret != 0)
+		return ret;
+
+	/* unlock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x1);
+
+	/* set switchers to forced PWM mode */
+	pmic_clrsetbits(dev, BD718XX_BUCK1_CTRL, 0, 0x8);
+	pmic_clrsetbits(dev, BD718XX_BUCK2_CTRL, 0, 0x8);
+	pmic_clrsetbits(dev, BD718XX_1ST_NODVS_BUCK_CTRL, 0, 0x8);
+	pmic_clrsetbits(dev, BD718XX_2ND_NODVS_BUCK_CTRL, 0, 0x8);
+	pmic_clrsetbits(dev, BD718XX_4TH_NODVS_BUCK_CTRL, 0, 0x8);
+
+	/* increase VDD_0P95 (VDD_GPU/VPU/DRAM) to 0.975v for 1.5Ghz DDR */
+	pmic_reg_write(dev, BD718XX_1ST_NODVS_BUCK_VOLT, 0x83);
+
+	/* increase VDD_SOC to 0.85v before first DRAM access */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0x0f);
+
+	/* increase VDD_ARM to 0.92v for 800 and 1600Mhz */
+	pmic_reg_write(dev, BD718XX_BUCK2_VOLT_RUN, 0x16);
+
+	/* Lock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
+	puts("PMIC    : BD71847\n");
+#endif
 
 	return 0;
 }
