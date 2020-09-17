@@ -138,30 +138,6 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 	};
-
-	sound {
-		compatible = "simple-audio-card";
-		simple-audio-card,name = "tlv320-audio";
-		simple-audio-card,format = "i2s";
-		simple-audio-card,frame-master = <&codecdai>;
-		simple-audio-card,bitclock-master = <&codecdai>;
-		simple-audio-card,widgets =
-			"Line", "Line In",
-			"Line", "Line Out";
-		simple-audio-card,routing =
-			"LINE1L", "Line In",
-			"LINE1R", "Line In",
-			"Line Out", "LLOUT",
-			"Line Out", "RLOUT";
-		simple-audio-card,cpu {
-			sound-dai = <&sai3>;
-		};
-
-		codecdai: simple-audio-card,codec {
-			sound-dai = <&tlv320aic3105>;
-			clocks = <&clk IMX8MM_CLK_SAI3_ROOT>;
-		};
-	};
 };
 
 &cpu_alert0 {
@@ -300,7 +276,6 @@
 				gw,voltage-divider-ohms = <10000 10000>;
 			};
 
-/* revB
 			channel@98 {
 				gw,mode = <2>;
 				reg = <0x98>;
@@ -310,21 +285,8 @@
 			channel@9a {
 				gw,mode = <2>;
 				reg = <0x9a>;
-				label = "vdd_soc";
-			};
-
-			channel@9c {
-				gw,mode = <2>;
-				reg = <0x9c>;
-				label = "vdd_core";
-			};
-
-			channel@9e {
-				gw,mode = <2>;
-				reg = <0x9e>;
 				label = "vdd_1p8";
 			};
-*/
 
 			channel@a2 {
 				gw,mode = <2>;
@@ -386,21 +348,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
-
-	tlv320aic3105: codec@18 {
-		#sound-dai-cells = <0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_tlv>;
-		compatible = "ti,tlv320aic3x";
-		reg = <0x18>;
-		reset-gpios = <&gpio4 4 GPIO_ACTIVE_LOW>;
-		ai3x-micbias-vg = <2>; /* MICBIAS_2_5V */
-		/* Regulators */
-		DRVDD-supply = <&reg_3p3v>;
-		AVDD-supply = <&reg_3p3v>;
-		IOVDD-supply = <&reg_3p3v>;
-		DVDD-supply = <&reg_1p8v>;
-	};
 
 	eeprom@52 {
 		compatible = "atmel,24c32";
@@ -706,10 +653,6 @@
 			MX8MM_IOMUXC_UART2_RXD_UART2_DCE_RX	0x140
 			MX8MM_IOMUXC_UART2_TXD_UART2_DCE_TX	0x140
 #ifdef UART2_RTSCTS
-/*
-			MX8MM_IOMUXC_UART4_RXD_UART2_DCE_CTS_B	0x140
-			MX8MM_IOMUXC_UART4_TXD_UART2_DCE_RTS_B	0x140
-*/
 			MX8MM_IOMUXC_UART4_RXD_GPIO5_IO28	0x140
 			MX8MM_IOMUXC_UART4_TXD_GPIO5_IO29	0x140
 #endif
