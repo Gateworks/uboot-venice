@@ -15,10 +15,25 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int dram_init(void)
+int board_phys_sdram_size(phys_size_t *size)
 {
-	/* TODO adjust per EEPROM */
-	gd->ram_size = PHYS_SDRAM_SIZE;
+	int ddr_size = readl(M4_BOOTROM_BASE_ADDR);
+
+	if (ddr_size == 0x4) {
+		*size = 0x100000000;
+// TODO: mmc and fec drivers broken with 4GiB DRAM (1GB base + 4GB overflows u32)
+// clamp at 3GiB to work-around for now
+*size = 0xc0000000;
+	} else if (ddr_size == 0x3) {
+		*size = 0xc0000000;
+	} else if (ddr_size == 0x2) {
+		*size = 0x80000000;
+	} else if (ddr_size == 0x1) {
+		*size = 0x40000000;
+	} else {
+		printf("Unknown DDR type!!!\n");
+		*size = 0x40000000;
+	}
 
 	return 0;
 }

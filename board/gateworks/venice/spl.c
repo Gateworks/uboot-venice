@@ -22,6 +22,7 @@
 #include <dm/device-internal.h>
 
 #include "gsc.h"
+#include "lpddr4_timing.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -41,9 +42,26 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	}
 }
 
-static void spl_dram_init(void)
+static void spl_dram_init(int size)
 {
-	ddr_init(&dram_timing);
+	struct dram_timing_info *dram_timing;
+
+	switch (size) {
+	case 1:
+		dram_timing = &dram_timing_1gb;
+		break;
+	case 4:
+		dram_timing = &dram_timing_4gb;
+		break;
+	default:
+		printf("Unknown DDR configuration: %d GiB\n", size);
+		dram_timing = &dram_timing_1gb;
+		size = 1;
+	}
+
+	printf("DRAM    : LPDDR4 %d GiB\n", size);
+	ddr_init(dram_timing);
+	writel(size, M4_BOOTROM_BASE_ADDR);
 }
 
 #ifdef CONFIG_SPL_LOAD_FIT
@@ -114,7 +132,6 @@ static int power_init(void)
 
 #ifdef CONFIG_SPL_BUILD
         ret = i2c_get_chip_for_busnum(busno + 1, slave, 1, &dev);
-//printf("i2c%d@0x%2x: %d\n", busno, slave, ret);
         if (ret)
                 return ret;
 #else
@@ -186,6 +203,7 @@ void board_init_f(ulong dummy)
 {
 	struct udevice *dev;
 	int ret;
+	int dram_sz;
 
 	arch_cpu_init();
 
@@ -217,13 +235,13 @@ void board_init_f(ulong dummy)
 	enable_tzc380();
 
 	/* GSC */
-	gsc_init();
+	dram_sz = gsc_init();
 
 	/* PMIC */
 	power_init();
 
 	/* DDR initialization */
-	spl_dram_init();
+	spl_dram_init(dram_sz);
 
 	board_init_r(NULL, 0);
 }

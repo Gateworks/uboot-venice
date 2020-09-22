@@ -61,7 +61,8 @@
 	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
 	"update_firmware=tftp $loadaddr venice/flash.bin && setexpr blkcnt $filesize + 0x1ff && setexpr blkcnt $blkcnt / 0x200 && mmc dev 2 && mmc write $loadaddr 0x42 $blkcnt\0" \
 	"boot_net=setenv bootargs 'console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 memtest=1 debug'; tftp $loadaddr venice/Image && booti $loadaddr - $fdtcontroladdr\0" \
-	"update_all=tftp $loadaddr venice/ubuntu-focal.gz && gzwrite mmc 2 $loadaddr $filesize\0" \
+	"update_all=tftp $loadaddr venice/venice-test.img.gz && gzwrite mmc 2 $loadaddr $filesize\0" \
+	"erase_env=mmc dev 2; mmc erase 0x7f08 0x40\0" \
         BOOTENV
 
 /* Link Definitions */
@@ -84,7 +85,7 @@
 #define CONFIG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                      0x40000000
 #define PHYS_SDRAM_SIZE			0x40000000 /* 1GB DDR */
-#define CONFIG_SYS_BOOTM_LEN		SZ_64M
+#define CONFIG_SYS_BOOTM_LEN		SZ_256M
 
 #define CONFIG_SYS_MEMTEST_START	PHYS_SDRAM
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_SIZE >> 1))

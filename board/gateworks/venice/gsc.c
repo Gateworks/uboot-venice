@@ -668,7 +668,7 @@ int gsc_init(void)
 
 	gsc_boot_wd_disable();
 
-	return 0;
+	return ((16 << info->sdram_size) / 1024);
 }
 
 #if 0
