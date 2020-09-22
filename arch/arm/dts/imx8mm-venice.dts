@@ -116,6 +116,17 @@
 		regulator-always-on;
 	};
 
+	reg_usb_otg1_vbus: regulator-usb-otg1 {
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_reg_usb1_en>;
+		compatible = "regulator-fixed";
+		regulator-name = "usb_otg1_vbus";
+		gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+	};
+
 	reg_usb_otg2_vbus: regulator-usb-otg2 {
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_reg_usb2_en>;
@@ -455,6 +466,7 @@
 
 &usbotg1 {
 	dr_mode = "otg";
+	vbus-supply = <&reg_usb_otg1_vbus>;
 	status = "okay";
 };
 
@@ -601,7 +613,13 @@
 		>;
 	};
 
-	pinctrl_reg_usb2_en: regusb1grp {
+	pinctrl_reg_usb1_en: regusb1grp {
+		fsl,pins = <
+			MX8MM_IOMUXC_GPIO1_IO12_GPIO1_IO12		0x41
+		>;
+	};
+
+	pinctrl_reg_usb2_en: regusb2grp {
 		fsl,pins = <
 			MX8MM_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x41
 		>;
