@@ -13,19 +13,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define GSC_PROBE_RETRY_MS 500
 
-struct venice_board_info board_info;
-/*
-struct venice_board_info *gsc_get_board_info(void) {
-	return &board_info;
-}
-*/
-
-/*
-int board_model = GW_UNKNOWN;
-int gsc_get_board_model(void) {
-	return board_model;
-}
-*/
+struct venice_board_info som_info;
+struct venice_board_info base_info;
 
 /* System Controller registers */
 enum {
@@ -110,28 +99,45 @@ static struct udevice *gsc_get_dev(int busno, int slave)
 	return dev;
 }
 
+static void hexdump(u8 *buf, int size)
+{
+	int i = 0;
+	char ascii[20];
+
+	ascii[0] = 0;
+	for (i = 0; i < size; i++) {
+		if (0 == (i % 16)) {
+			if (ascii[0]) {
+				ascii[16] = 0;
+				printf("  |%s|\n", ascii);
+				ascii[0] = 0;
+			}
+			printf("%04x ", i);
+		}
+		if (0 == (i % 8))
+			printf(" ");
+		printf("%02x ", buf[i]);
+		ascii[i % 16] = (buf[i] < ' ' || buf[i] > 127) ? '.' : buf[i];
+	}
+	printf("  |%s|\n", ascii);
+}
+
 /* read EEPROM:
  * - read EEPROM and check for EEPROM validity
  * - init BDK variables (BDK_CONFIG_BOARD_MODEL, BDK_CONFIG_BOARD_SERIAL,
  *   and BDK_CONFIG_BOARD_REVISION)
  * - return baseboard type
  */
-static int gsc_read_eeprom(void)
+static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_info *info)
 {
-	struct venice_board_info *info = &board_info;
 	int i;
 	int chksum;
 	unsigned char *buf = (unsigned char *)info;
-//	int type;
-//	char serial_str[8];
-	char revision_str[8] = { 0 };
-	char rev_pcb = 'A'; /* PCB revision */
-	int  rev_bom = 0; /* BOM revision */
 	struct udevice *dev;
 	int ret;
 
 	/* probe device */
-	dev = gsc_get_dev(1, GSC_EEPROM_ADDR);
+	dev = gsc_get_dev(bus, slave);
 	if (!dev) {
 		puts("ERROR: Failed to probe EEPROM\n");
 		return -ENODEV;
@@ -139,6 +145,11 @@ static int gsc_read_eeprom(void)
 
 	/* read eeprom config section */
 	memset(info, 0, sizeof(*info));
+	ret = i2c_set_chip_offset_len(dev, alen);
+	if (ret) {
+		puts("EEPROM: Failed to set alen\n");
+		return ret;
+	}
 	ret = dm_i2c_read(dev, 0x00, buf, sizeof(*info));
 	if (ret) {
 		puts("EEPROM: Failed to read EEPROM\n");
@@ -150,19 +161,15 @@ static int gsc_read_eeprom(void)
 		chksum += buf[i];
 	if ((info->chksum[0] != chksum>>8) ||
 	    (info->chksum[1] != (chksum&0xff))) {
-                puts("EEPROM: Invalid Model in EEPROM\n");
-                print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, buf,
-                                     sizeof(*info));
-		//return GW_UNKNOWN;
+                printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
+                hexdump(buf, sizeof(*info));
 		return -EINVAL;
 	}
 
 	/* sanity checks */
 	if (info->model[0] != 'G' || info->model[1] != 'W') {
-		puts("EEPROM: Invalid Model in EEPROM\n");
-                print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, buf,
-                                     sizeof(*info));
-		//return GW_UNKNOWN;
+		printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
+                hexdump(buf, sizeof(*info));
 		return -EINVAL;
 	}
 
@@ -171,126 +178,9 @@ static int gsc_read_eeprom(void)
 		strncpy(info->equiv_dts, info->model,
 		        sizeof(info->equiv_dts) - 1);
 	}
-//	type = GW_UNKNOWN;
-#if 0
-	switch (info->equiv_dts[3]) {
-	case '1':
-		type = GW610x;
-		break;
-	case '2':
-		type = GW620x;
-		break;
-	case '3':
-		type = GW630x;
-		break;
-	case '4':
-		type = GW640x;
-		break;
-	case '9':
-		if (!strncmp("GW6903", info->equiv_dts, 6))
-			type = GW6903;
-		break;
-	}
-	if (type == GW_UNKNOWN) {
-		puts("EEPROM: Failed model identification\n");
-                print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, buf,
-                                     sizeof(*info));
-	}
-#endif
-
-#if 0
-	/* store board/serial */
-	bdk_config_set_str(info->model, BDK_CONFIG_BOARD_MODEL);
-	sprintf(serial_str, "%d", info->serial);
-	bdk_config_set_str(serial_str, BDK_CONFIG_BOARD_SERIAL);
-
-	/* store MAC addr */
-	int macno = (info->macno == 0xff) ? 2 : info->macno;
-	bdk_config_set_int(macno, BDK_CONFIG_MAC_ADDRESS_NUM);
-	uint64_t mac = 0;
-	for (i = 5; i >= 0; i--)
-		mac |= (uint64_t)info->mac[i] << ((5-i)*8);
-	bdk_config_set_int(mac, BDK_CONFIG_MAC_ADDRESS);
-#endif
-
-	/* determine BOM revision from model */
-	for (i = strlen(info->equiv_dts) - 1; i > 0; i--) {
-		if (info->equiv_dts[i] == '-')
-			break;
-		if (info->equiv_dts[i] >= '1' && info->equiv_dts[i] <= '9') {
-			rev_bom = info->equiv_dts[i] - '0';
-			break;
-		}
-	}
-
-	/* determine PCB revision from model */
-	for (i = strlen(info->equiv_dts) - 1; i > 0; i--) {
-		if (info->equiv_dts[i] == '-')
-			break;
-		if (info->equiv_dts[i] >= 'A') {
-			rev_pcb = info->equiv_dts[i];
-			break;
-		}
-	}
-	if (rev_bom)
-		sprintf(revision_str, "%c.%d", rev_pcb, rev_bom);
-	else
-		sprintf(revision_str, "%c", rev_pcb);
-#if 0
-	bdk_config_set_str(revision_str, BDK_CONFIG_BOARD_REVISION);
-#endif
-
-	/* board revision specific changes */
-//	board_model = type;
-//	return type;
 
 	return 0;
 }
-
-#if 0
-/* write EEPROM with proper checksum */
-static int gsc_eeprom_update(void)
-{
-	struct venice_board_info *info = &board_info;
-	unsigned char *buf = (unsigned char *)info;
-	struct udevice *dev;
-	int i, ret, chksum;
-//	uint64_t mac;
-
-	/* probe device */
-	dev = gsc_get_dev(1, GSC_EEPROM_ADDR);
-	if (!dev) {
-		puts("ERROR: Failed to probe EEPROM\n");
-		return -ENODEV;
-	}
-
-#if 0
-	/* update info from dt */
-	strncpy(info->model, bdk_config_get_str(BDK_CONFIG_BOARD_MODEL),
-		sizeof(info->model));
-	info->serial = atoi(bdk_config_get_str(BDK_CONFIG_BOARD_SERIAL));
-	mac = bdk_config_get_int(BDK_CONFIG_MAC_ADDRESS);
-	for (i = 0; i < 6; i++)
-		info->mac[5-i] = (mac >> (i*8)) & 0xff;
-#endif
-
-	/* update checksum */
-	for (chksum = 0, i = 0; i < (int)sizeof(*info)-2; i++)
-		chksum += buf[i];
-	info->chksum[0] = chksum >> 8;
-	info->chksum[1] = chksum & 0xff;
-
-	/* write eeprom config section */
-	memset(info, 0, sizeof(*info));
-	ret = dm_i2c_write(dev, 0, buf, sizeof(*info));
-	if (ret) {
-		puts("EEPROM: Failed to write EEPROM\n");
-		return ret;
-	}
-
-	return 0;
-}
-#endif
 
 static int gsc_hwmon_reg(struct udevice *dev, int reg)
 {
@@ -342,91 +232,6 @@ static const char *gsc_get_rst_cause(struct udevice *dev)
 	return str;
 }
 
-#if 0
-/* board temp is unsigned int at reg 0 */
-static int gsc_board_temp(struct udevice *dev)
-{
-	int ui;
-
-	ui = gsc_hwmon_reg(dev, 0);
-	if (ui > 0x8000)
-		ui -= 0xffff;
-
-	return ui;
-}
-
-/* update MAX6642 remote threshold per CN80XXI-AD-1.0 */
-static int init_max6642(void)
-{
-	int tj_max, i, ret;
-	unsigned char reg;
-	struct udevice *dev;
-	unsigned char temp_remote = 0, temp_local = 0;
-	int temp_gsc = 0;
-
-	/* probe max6642 device */
-	dev = gsc_get_dev(1, MAX6642_SLAVE);
-	if (!dev) {
-		puts("ERROR: Failed to probe MAX6642\n");
-		return -ENODEV;
-	}
-
-	/*
-	 * CN80XX industrial temp max Junction Temp (Tj):
-	 *  800MHz: 100C
-	 * 1000MHz: 100C
-	 * 1200MHz: 100C
-	 * 1500MHz: 95C
-	 */
-	tj_max = 100;
-#if 0
-	if ( (bdk_clock_get_rate(node, BDK_CLOCK_RCLK) / 1000000) >= 1500)
-		tj_max -= 5;
-#endif
-
-	/* set new limits:
-	 *  Note disabling local sense keeps you from ever being able to
-	 *  clear the alert if it has tripped so instead we just set the
-	 *  local limit to the remote limit so remote will always trip first.
-	 */
-	reg = 0x10;
-	ret = dm_i2c_write(dev, MAX6642_W_CONFIG, &reg, 1);
-	if (ret)
-		return ret;
-	reg = tj_max;
-	ret = dm_i2c_write(dev, MAX6642_W_LIMIT_LOCAL, &reg, 1);
-	if (ret)
-		return ret;
-	ret = dm_i2c_write(dev, MAX6642_W_LIMIT_REMOTE, &reg, 1);
-	if (ret)
-		return ret;
-
-	/* loop over status until clear */
-	for (i = 0; i < 20; i++) {
-		ret = dm_i2c_read(dev, MAX6642_R_STATUS, &reg, 1);
-		if (ret)
-			return ret;
-		if (!(reg & 0x50))
-			break;
-		udelay(500000);
-	}
-
-	/* read remote temp */
-	ret = dm_i2c_read(dev, MAX6642_R_TEMP_REMOTE, &temp_remote, 1);
-	ret = dm_i2c_read(dev, MAX6642_R_LIMIT_REMOTE, &temp_local, 1);
-
-	/* probe gsc hwmon device */
-	dev = gsc_get_dev(1, GSC_HWMON_ADDR);
-	if (dev) 
-		temp_gsc = gsc_board_temp(dev);
-
-	printf("Temp    : Board:%dC/86C CPU:%dC/%dC\n", temp_gsc / 10,
-	       temp_local, temp_remote);
-
-	return 0;
-}
-#endif
-
 static int gsc_boot_wd_disable(void)
 {
 	uint8_t reg;
@@ -454,26 +259,6 @@ err:
 	printf("i2c error");
 	return ret;
 }
-
-#if 0
-static int gsc_get_fwver(void)
-{
-	unsigned char reg;
-	struct udevice *dev;
-	int ret;
-
-	/* probe device */
-	dev = gsc_get_dev(1, GSC_SC_ADDR);
-	if (!dev)
-		return -ENODEV;
-
-	ret = dm_i2c_read(dev, GSC_SC_FWVER, &reg, 1);
-	if (ret)
-		return ret;
-
-	return reg;
-}
-#endif
 
 int gsc_hwmon(void)
 {
@@ -569,6 +354,40 @@ if (ret) {
 	return 0;
 }
 
+/* determine BOM revision from model */
+int get_bom_rev(const char *str)
+{
+	int  rev_bom = 0;
+	int i;
+
+	for (i = strlen(str) - 1; i > 0; i--) {
+		if (str[i] == '-')
+			break;
+		if (str[i] >= '1' && str[i] <= '9') {
+			rev_bom = str[i] - '0';
+			break;
+		}
+	}
+	return rev_bom;
+}
+
+/* determine PCB revision from model */
+char get_pcb_rev(const char *str)
+{
+	char rev_pcb = 'A';
+	int i;
+
+	for (i = strlen(str) - 1; i > 0; i--) {
+		if (str[i] == '-')
+			break;
+		if (str[i] >= 'A') {
+			rev_pcb = str[i];
+			break;
+		}
+	}
+	return rev_pcb;
+}
+
 /* gsc_init:
  *
  * This is called from early init (boot stub) to determine board model
@@ -580,10 +399,11 @@ if (ret) {
  */
 int gsc_init(void)
 {
-	struct venice_board_info *info = &board_info;
 	unsigned char buf[16];
 	struct udevice *dev;
 	int i, ret;
+	char rev_pcb;
+	int rev_bom;
 
 	/*
 	 * On a board with a missing/depleted backup battery for GSC, the
@@ -614,20 +434,63 @@ int gsc_init(void)
 	printf(" RST:%s", gsc_get_rst_cause(dev));
 	printf("\n");
 
-	ret = gsc_read_eeprom();
+	/* read SOM EEPROM */
+	ret = gsc_read_eeprom(1, GSC_EEPROM_ADDR, 1, &som_info);
 	if (ret)
 #if 0 // allow failure for now
 		return ret;
 #else
-		memset(info, 0, sizeof(*info));
+		memset(&som_info, 0, sizeof(som_info));
 #endif
 
 	//printf("Temp    : Board:%dC/86C\n", gsc_board_temp(dev) / 10);
-	printf("Model   : %s\n", info->model);
-	printf("MFGDate : %02x-%02x-%02x%02x\n",
-		info->mfgdate[0], info->mfgdate[1],
-		info->mfgdate[2], info->mfgdate[3]);
-	printf("Serial  : %d\n", info->serial);
+
+	/* read optional baseboard EEPROM */
+	ret = gsc_read_eeprom(2, 0x52, 2, &base_info);
+	if (ret) {
+		printf("Model   : %s\n", som_info.model);
+		printf("Serial  : %d\n", som_info.serial);
+		printf("MFGDate : %02x-%02x-%02x%02x\n",
+			som_info.mfgdate[0], som_info.mfgdate[1],
+			som_info.mfgdate[2], som_info.mfgdate[3]);
+	}
+	else {
+		/* SOM + Baseboard */
+		debug("SOM     : %s %d %02x-%02x-%02x%02x\n",
+			som_info.model, som_info.serial,
+			som_info.mfgdate[0], som_info.mfgdate[1],
+			som_info.mfgdate[2], som_info.mfgdate[3]);
+		debug("BASE    : %s %d %02x-%02x-%02x%02x\n",
+			base_info.model, base_info.serial,
+			base_info.mfgdate[0], base_info.mfgdate[1],
+			base_info.mfgdate[2], base_info.mfgdate[3]);
+
+		printf("Model   : GW%c%c%c%c-%c%c-",
+			som_info.model[2], // family
+			base_info.model[4], // baseboard
+			base_info.model[4], base_info.model[5], // subload of baseboard
+			som_info.model[4], som_info.model[5]); // last 2digits of SOM
+
+		/* baseboard revision */
+		rev_pcb = get_pcb_rev(base_info.model);
+		rev_bom = get_bom_rev(base_info.model);
+		if (rev_bom)
+			printf("%c%d", rev_pcb, rev_bom);
+		else
+			printf("%c", rev_pcb);
+		/* som revision */
+		rev_pcb = get_pcb_rev(som_info.model);
+		rev_bom = get_bom_rev(som_info.model);
+		if (rev_bom)
+			printf("%c%d", rev_pcb, rev_bom);
+		else
+			printf("%c", rev_pcb);
+		puts("\n");
+		printf("Serial  : %d\n", som_info.serial);
+		printf("MfgDate : %02x-%02x-%02x%02x\n",
+			som_info.mfgdate[0], som_info.mfgdate[1],
+			som_info.mfgdate[2], som_info.mfgdate[3]);
+	}
 
 	/* Display RTC */
 	puts("RTC     : ");
@@ -639,36 +502,9 @@ int gsc_init(void)
 		printf("%d\n", buf[0] | buf[1]<<8 | buf[2]<<16 | buf[3]<<24);
 	}
 
-#if 0
-	/*
-	 * Configure early GPIO
-	 */
-	/* Enable front-panel LEDs */
-	if (cfg->gpio_ledblu != -1) {
-		/* tri-color LED stack individually controlled active low */
-		if (cfg->gpio_ledgrn != -1)
-			gpio_output(cfg->gpio_ledgrn, 0);
-		if (cfg->gpio_ledred != -1)
-			gpio_output(cfg->gpio_ledred, 1);
-		if (cfg->gpio_ledblu != -1)
-			gpio_output(cfg->gpio_ledblu, 1);
-	} else {
-		/* bi-color LED stack push-pull active high */
-		if (cfg->gpio_ledgrn != -1)
-			gpio_output(cfg->gpio_ledgrn, 1);
-		if (cfg->gpio_ledred != -1)
-			gpio_output(cfg->gpio_ledred, 0);
-	}
-	/* Configure Mezzanine IO */
-	if (cfg->gpio_mezz_pwrdis != -1)
-		gpio_output(cfg->gpio_mezz_pwrdis, 0);
-	if (cfg->gpio_mezz_irq != -1)
-		gpio_input(cfg->gpio_mezz_irq);
-#endif
-
 	gsc_boot_wd_disable();
 
-	return ((16 << info->sdram_size) / 1024);
+	return ((16 << som_info.sdram_size) / 1024);
 }
 
 #if 0
