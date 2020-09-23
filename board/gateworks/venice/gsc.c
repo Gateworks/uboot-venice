@@ -646,7 +646,7 @@ static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return CMD_RET_USAGE;
 
 	if (strcasecmp(argv[1], "sleep") == 0) {
-		if (argc < 4)
+		if (argc < 3)
 			return CMD_RET_USAGE;
 		if (!gsc_sleep(simple_strtoul(argv[2], NULL, 10)))
 			return CMD_RET_SUCCESS;
