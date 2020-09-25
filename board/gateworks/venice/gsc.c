@@ -232,34 +232,6 @@ static const char *gsc_get_rst_cause(struct udevice *dev)
 	return str;
 }
 
-static int gsc_boot_wd_disable(void)
-{
-	uint8_t reg;
-	struct udevice *dev;
-	int ret;
-
-	/* probe device */
-	dev = gsc_get_dev(1, GSC_SC_ADDR);
-	if (!dev)
-		return -ENODEV;
-
-	ret = dm_i2c_read(dev, GSC_SC_CTRL1, &reg, 1);
-	if (ret)
-		goto err;
-	reg |= (1 << GSC_SC_CTRL1_WDDIS);
-	reg &= ~(1 << GSC_SC_CTRL1_BOOT_CHK);
-	ret = dm_i2c_write(dev, GSC_SC_CTRL1, &reg, 1);
-	if (ret)
-		goto err;
-	puts("GSC     : boot watchdog disabled\n");
-
-	return 0;
-
-err:
-	printf("i2c error");
-	return ret;
-}
-
 int gsc_hwmon(void)
 {
 	const void *fdt = gd->fdt_blob;
@@ -502,8 +474,6 @@ int gsc_init(void)
 		printf("%d\n", buf[0] | buf[1]<<8 | buf[2]<<16 | buf[3]<<24);
 	}
 
-	gsc_boot_wd_disable();
-
 	return ((16 << som_info.sdram_size) / 1024);
 }
 
@@ -639,6 +609,34 @@ err:
 	return ret;
 }
 
+static int gsc_boot_wd_disable(void)
+{
+	uint8_t reg;
+	struct udevice *dev;
+	int ret;
+
+	/* probe device */
+	dev = gsc_get_dev(1, GSC_SC_ADDR);
+	if (!dev)
+		return -ENODEV;
+
+	ret = dm_i2c_read(dev, GSC_SC_CTRL1, &reg, 1);
+	if (ret)
+		goto err;
+	reg |= (1 << GSC_SC_CTRL1_WDDIS);
+	reg &= ~(1 << GSC_SC_CTRL1_BOOT_CHK);
+	ret = dm_i2c_write(dev, GSC_SC_CTRL1, &reg, 1);
+	if (ret)
+		goto err;
+	puts("GSC     : boot watchdog disabled\n");
+
+	return 0;
+
+err:
+	printf("i2c error");
+	return ret;
+}
+
 static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc < 2)
@@ -656,12 +654,17 @@ static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return CMD_RET_SUCCESS;
 	}
 
+	else if (strcasecmp(argv[1], "wd-disable") == 0) {
+		if (!gsc_boot_wd_disable())
+			return CMD_RET_SUCCESS;
+	}
+
 	return CMD_RET_USAGE;
 }
 
 U_BOOT_CMD(
 	gsc, 4, 1, do_gsc, "Gateworks System Controller",
-	"[sleep <secs>]|[hwmon]\n"
+	"[sleep <secs>]|[hwmon]|[wd-disable]\n"
 	);
 
 #endif /* CONFIG_CMD_GSC */
