@@ -360,53 +360,14 @@ char get_pcb_rev(const char *str)
 	return rev_pcb;
 }
 
-/* gsc_init:
- *
- * This is called from early init (boot stub) to determine board model
- * and perform any critical early init including:
- *  - configure early GPIO (ie front panel GRN LED, default states)
- *  - display GSC details banner
- *  - display EEPROM model/mfgdate/serial
- *  - configuring temperature sensor thresholds
- */
-int gsc_init(void)
+static int gsc_info(int verbose)
 {
 	unsigned char buf[16];
 	struct udevice *dev;
-	int i, ret;
 	char rev_pcb;
 	int rev_bom;
+	int ret;
 
-	/*
-	 * On a board with a missing/depleted backup battery for GSC, the
-	 * board may be ready to probe the GSC before its firmware is
-	 * running.  We will wait here indefinately for the GSC/EEPROM.
-	 */
-	for (i = GSC_PROBE_RETRY_MS; i > 0; i--) {
-		/* probe device */
-		dev = gsc_get_dev(1, GSC_SC_ADDR);
-		if (dev)
-			break;
-		mdelay(1);
-	}
-	if (!dev) {
-		puts("ERROR: Failed probing GSC\n");
-		return -ENODEV;
-	}
-
-	ret = dm_i2c_read(dev, 0, buf, sizeof(buf)); 
-	if (ret) {
-		puts("ERROR: Failed reading GSC\n");
-		return ret;
-	}
-
-	/* banner */
-	printf("GSC     : v%d 0x%04x", buf[GSC_SC_FWVER],
-		buf[GSC_SC_FWCRC] | buf[GSC_SC_FWCRC+1]<<8);
-	printf(" RST:%s", gsc_get_rst_cause(dev));
-	printf("\n");
-
-	/* read SOM EEPROM */
 	ret = gsc_read_eeprom(1, GSC_EEPROM_ADDR, 1, &som_info);
 	if (ret)
 #if 0 // allow failure for now
@@ -428,15 +389,16 @@ int gsc_init(void)
 	}
 	else {
 		/* SOM + Baseboard */
-		debug("SOM     : %s %d %02x-%02x-%02x%02x\n",
-			som_info.model, som_info.serial,
-			som_info.mfgdate[0], som_info.mfgdate[1],
-			som_info.mfgdate[2], som_info.mfgdate[3]);
-		debug("BASE    : %s %d %02x-%02x-%02x%02x\n",
-			base_info.model, base_info.serial,
-			base_info.mfgdate[0], base_info.mfgdate[1],
-			base_info.mfgdate[2], base_info.mfgdate[3]);
-
+		if (verbose) {
+			printf("SOM     : %s %d %02x-%02x-%02x%02x\n",
+				som_info.model, som_info.serial,
+				som_info.mfgdate[0], som_info.mfgdate[1],
+				som_info.mfgdate[2], som_info.mfgdate[3]);
+			printf("BASE    : %s %d %02x-%02x-%02x%02x\n",
+				base_info.model, base_info.serial,
+				base_info.mfgdate[0], base_info.mfgdate[1],
+				base_info.mfgdate[2], base_info.mfgdate[3]);
+		}
 		printf("Model   : GW%c%c%c%c-%c%c-",
 			som_info.model[2], // family
 			base_info.model[4], // baseboard
@@ -473,6 +435,55 @@ int gsc_init(void)
 		dm_i2c_read(dev, 0, buf, 6);
 		printf("%d\n", buf[0] | buf[1]<<8 | buf[2]<<16 | buf[3]<<24);
 	}
+
+	return 0;
+}
+
+/* gsc_init:
+ *
+ * This is called from early init (boot stub) to determine board model
+ * and perform any critical early init including:
+ *  - configure early GPIO (ie front panel GRN LED, default states)
+ *  - display GSC details banner
+ *  - display EEPROM model/mfgdate/serial
+ *  - configuring temperature sensor thresholds
+ */
+int gsc_init(void)
+{
+	unsigned char buf[16];
+	struct udevice *dev;
+	int i, ret;
+
+	/*
+	 * On a board with a missing/depleted backup battery for GSC, the
+	 * board may be ready to probe the GSC before its firmware is
+	 * running.  We will wait here indefinately for the GSC/EEPROM.
+	 */
+	for (i = GSC_PROBE_RETRY_MS; i > 0; i--) {
+		/* probe device */
+		dev = gsc_get_dev(1, GSC_SC_ADDR);
+		if (dev)
+			break;
+		mdelay(1);
+	}
+	if (!dev) {
+		puts("ERROR: Failed probing GSC\n");
+		return -ENODEV;
+	}
+
+	ret = dm_i2c_read(dev, 0, buf, sizeof(buf));
+	if (ret) {
+		puts("ERROR: Failed reading GSC\n");
+		return ret;
+	}
+
+	/* banner */
+	printf("GSC     : v%d 0x%04x", buf[GSC_SC_FWVER],
+		buf[GSC_SC_FWCRC] | buf[GSC_SC_FWCRC+1]<<8);
+	printf(" RST:%s", gsc_get_rst_cause(dev));
+	printf("\n");
+
+	gsc_info(0);
 
 	return ((16 << som_info.sdram_size) / 1024);
 }
@@ -640,8 +651,7 @@ err:
 static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc < 2)
-//		return gsc_info(1);
-		return CMD_RET_USAGE;
+		return gsc_info(1);
 
 	if (strcasecmp(argv[1], "sleep") == 0) {
 		if (argc < 3)
@@ -653,7 +663,6 @@ static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		if (!gsc_hwmon())
 			return CMD_RET_SUCCESS;
 	}
-
 	else if (strcasecmp(argv[1], "wd-disable") == 0) {
 		if (!gsc_boot_wd_disable())
 			return CMD_RET_SUCCESS;
