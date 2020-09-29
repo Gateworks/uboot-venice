@@ -235,7 +235,7 @@ void board_init_f(ulong dummy)
 	enable_tzc380();
 
 	/* GSC */
-	dram_sz = gsc_init();
+	dram_sz = gsc_init(0);
 
 	/* PMIC */
 	power_init();

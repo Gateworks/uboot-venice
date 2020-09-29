@@ -41,9 +41,10 @@ struct venice_board_info {
 	uint8_t chksum[2];	/* 0x4E */
 };
 
-int gsc_init(void);
+int gsc_init(int quiet);
 int gsc_hwmon(void);
 const char *gsc_get_dtb_name(int level);
+int gsc_getmac(int index, uint8_t *enetaddr);
 
 #endif
 

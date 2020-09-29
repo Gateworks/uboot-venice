@@ -16,6 +16,55 @@ DECLARE_GLOBAL_DATA_PTR;
 struct venice_board_info som_info;
 struct venice_board_info base_info;
 
+int gsc_getmac(int index, uint8_t *address)
+{
+	int i, j;
+	u32 maclow, machigh;
+	u64 mac;
+
+	j = 0;
+	maclow = som_info.mac[5];
+	maclow |= som_info.mac[4] << 8;
+	maclow |= som_info.mac[3] << 16;
+	maclow |= som_info.mac[2] << 24;
+	machigh = som_info.mac[1];
+	machigh |= som_info.mac[0] << 8;
+	mac = machigh;
+	mac <<= 32;
+	mac |= maclow;
+	for (i = 0; i < som_info.macno; i++, j++) {
+		if (index == j)
+			goto out;
+	}
+
+	maclow = base_info.mac[5];
+	maclow |= base_info.mac[4] << 8;
+	maclow |= base_info.mac[3] << 16;
+	maclow |= base_info.mac[2] << 24;
+	machigh = base_info.mac[1];
+	machigh |= base_info.mac[0] << 8;
+	mac = machigh;
+	mac <<= 32;
+	mac |= maclow;
+	for (i = 0; i < base_info.macno; i++, j++) {
+		if (index == j)
+			goto out;
+	}
+
+	return -EINVAL;
+
+out:
+	mac += i;
+	address[0] = (mac >> 40) & 0xff;
+	address[1] = (mac >> 32) & 0xff;
+	address[2] = (mac >> 24) & 0xff;
+	address[3] = (mac >> 16) & 0xff;
+	address[4] = (mac >> 8) & 0xff;
+	address[5] = (mac >> 0) & 0xff;
+
+	return 0;
+}
+
 /* System Controller registers */
 enum {
 	GSC_SC_CTRL0		= 0,
@@ -378,6 +427,8 @@ static int gsc_info(int verbose)
 
 	/* read optional baseboard EEPROM */
 	ret = gsc_read_eeprom(2, 0x52, 2, &base_info);
+	if (!verbose)
+		return 0;
 	if (ret) {
 		printf("Model   : %s\n", som_info.model);
 		printf("Serial  : %d\n", som_info.serial);
@@ -387,7 +438,7 @@ static int gsc_info(int verbose)
 	}
 	else {
 		/* SOM + Baseboard */
-		if (verbose) {
+		if (verbose > 1) {
 			printf("SOM     : %s %d %02x-%02x-%02x%02x\n",
 				som_info.model, som_info.serial,
 				som_info.mfgdate[0], som_info.mfgdate[1],
@@ -446,7 +497,7 @@ static int gsc_info(int verbose)
  *  - display EEPROM model/mfgdate/serial
  *  - configuring temperature sensor thresholds
  */
-int gsc_init(void)
+int gsc_init(int quiet)
 {
 	unsigned char buf[16];
 	struct udevice *dev;
@@ -476,12 +527,15 @@ int gsc_init(void)
 	}
 
 	/* banner */
-	printf("GSC     : v%d 0x%04x", buf[GSC_SC_FWVER],
-		buf[GSC_SC_FWCRC] | buf[GSC_SC_FWCRC+1]<<8);
-	printf(" RST:%s", gsc_get_rst_cause(dev));
-	printf("\n");
+	if (!quiet) {
+		printf("GSC     : v%d 0x%04x", buf[GSC_SC_FWVER],
+			buf[GSC_SC_FWCRC] | buf[GSC_SC_FWCRC+1]<<8);
+		printf(" RST:%s", gsc_get_rst_cause(dev));
+		printf("\n");
+		gsc_info(1);
+	} else
+		gsc_info(0);
 
-	gsc_info(0);
 
 	return ((16 << som_info.sdram_size) / 1024);
 }
@@ -649,7 +703,7 @@ err:
 static int do_gsc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc < 2)
-		return gsc_info(1);
+		return gsc_info(2);
 
 	if (strcasecmp(argv[1], "sleep") == 0) {
 		if (argc < 3)

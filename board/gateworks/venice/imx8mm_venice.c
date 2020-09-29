@@ -53,6 +53,26 @@ static int setup_fec(void)
 int board_phy_config(struct phy_device *phydev)
 {
 	unsigned short val;
+	const char *ethmac;
+	char env[32];
+	int ret, i;
+	uint8_t enetaddr[6];
+
+	/* Set mac addrs */
+	i = 0;
+	do {
+		if (i)
+			sprintf(env, "eth%daddr", i);
+		else
+			sprintf(env, "ethaddr");
+		ethmac = env_get(env);
+		if (!ethmac) {
+			ret = gsc_getmac(i, enetaddr);
+			if (!ret)
+				eth_env_set_enetaddr(env, enetaddr);
+		}
+		i++;
+	} while (!ret);
 
         /* TI DP83867 */
 	if (phydev->phy_id == 0x2000a231) {
@@ -119,7 +139,7 @@ int board_usb_phy_mode(int index) {
 
 int board_init(void)
 {
-	// TODO: configure LED's
+	gsc_init(1);
 
 	if (IS_ENABLED(CONFIG_FEC_MXC))
 		setup_fec();
