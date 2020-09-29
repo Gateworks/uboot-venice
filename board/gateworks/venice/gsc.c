@@ -77,8 +77,8 @@ static struct udevice *gsc_get_dev(int busno, int slave)
 
 #ifdef CONFIG_SPL_BUILD
 	ret = i2c_get_chip_for_busnum(busno + 1, slave, 1, &dev);
-        if (ret)
-                return NULL;
+	if (ret)
+		return NULL;
 #else
 	struct udevice *bus;
 
@@ -161,22 +161,21 @@ static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_inf
 		chksum += buf[i];
 	if ((info->chksum[0] != chksum>>8) ||
 	    (info->chksum[1] != (chksum&0xff))) {
-                printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
-                hexdump(buf, sizeof(*info));
+		printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
+		hexdump(buf, sizeof(*info));
 		return -EINVAL;
 	}
 
 	/* sanity checks */
 	if (info->model[0] != 'G' || info->model[1] != 'W') {
 		printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
-                hexdump(buf, sizeof(*info));
+		hexdump(buf, sizeof(*info));
 		return -EINVAL;
 	}
 
 	/* use model as equivalent DTS if not specified */
 	if ((info->equiv_dts[0] == 0) || (info->equiv_dts[0] == 0xff)) {
-		strncpy(info->equiv_dts, info->model,
-		        sizeof(info->equiv_dts) - 1);
+		strncpy(info->equiv_dts, info->model, sizeof(info->equiv_dts) - 1);
 	}
 
 	return 0;
@@ -300,8 +299,7 @@ if (ret) {
 			/* apply pre-scaler voltage divider */
 			const uint32_t *div;
 			int r[2];
-			div  = fdt_getprop(fdt, node, "gw,voltage-divider-ohms",
-					   &len);
+			div  = fdt_getprop(fdt, node, "gw,voltage-divider-ohms", &len);
 			if (div && (len == sizeof(uint32_t) * 2)) {
 				r[0] = fdt32_to_cpu(div[0]);
 				r[1] = fdt32_to_cpu(div[1]);
