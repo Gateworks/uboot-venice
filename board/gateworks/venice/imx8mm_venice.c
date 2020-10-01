@@ -153,3 +153,18 @@ int board_mmc_get_env_dev(int devno)
 {
 	return devno;
 }
+
+int ft_board_setup(void *blob, bd_t *bd)
+{
+	int i;
+
+	/*
+	 * remove reset gpio control as we configure the PHY registers
+	 * for internal delay, LED config, and clock config in the bootloader
+	 */
+	i = fdt_node_offset_by_compatible(blob, -1, "fsl,imx8mm-fec");
+	if (i)
+		fdt_delprop(blob, i, "phy-reset-gpios");
+
+	return 0;
+}
