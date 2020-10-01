@@ -3,6 +3,7 @@
  */
 
 #include <common.h>
+#include <hang.h>
 #include <hexdump.h>
 #include <i2c.h>
 #include <dm/uclass.h>
@@ -418,12 +419,10 @@ static int gsc_info(int verbose)
 	int ret;
 
 	ret = gsc_read_eeprom(1, GSC_EEPROM_ADDR, 1, &som_info);
-	if (ret)
-#if 0 // allow failure for now
-		return ret;
-#else
+	if (ret) {
 		memset(&som_info, 0, sizeof(som_info));
-#endif
+		return ret;
+	}
 
 	//printf("Temp    : Board:%dC/86C\n", gsc_board_temp(dev) / 10);
 
@@ -534,10 +533,12 @@ int gsc_init(int quiet)
 			buf[GSC_SC_FWCRC] | buf[GSC_SC_FWCRC+1]<<8);
 		printf(" RST:%s", gsc_get_rst_cause(dev));
 		printf("\n");
-		gsc_info(1);
+		ret = gsc_info(1);
 	} else
-		gsc_info(0);
+		ret = gsc_info(0);
 
+	if (ret)
+		hang();
 
 	return ((16 << som_info.sdram_size) / 1024);
 }
