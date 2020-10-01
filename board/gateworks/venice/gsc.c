@@ -212,6 +212,7 @@ static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_inf
 	    (info->chksum[1] != (chksum&0xff))) {
 		printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
 		hexdump(buf, sizeof(*info));
+		memset(info, 0, sizeof(*info));
 		return -EINVAL;
 	}
 
@@ -219,6 +220,7 @@ static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_inf
 	if (info->model[0] != 'G' || info->model[1] != 'W') {
 		printf("EEPROM: I2C%d@0x%02x: Invalid Model in EEPROM\n", bus, slave);
 		hexdump(buf, sizeof(*info));
+		memset(info, 0, sizeof(*info));
 		return -EINVAL;
 	}
 
