@@ -58,11 +58,15 @@
 	"scriptaddr=0x43000000\0" \
 	"ipaddr=192.168.1.22\0" \
 	"serverip=192.168.1.146\0" \
+	"dev=2\0" \
+	"bootargs=net.ifnames=0\0" \
+	"preboot=gsc wd-disable\0" \
 	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
-	"update_firmware=tftp $loadaddr venice/flash.bin && setexpr blkcnt $filesize + 0x1ff && setexpr blkcnt $blkcnt / 0x200 && mmc dev 2 && mmc write $loadaddr 0x42 $blkcnt\0" \
-	"boot_net=setenv bootargs 'console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 memtest=1 debug'; tftp $loadaddr venice/Image && booti $loadaddr - $fdtcontroladdr\0" \
-	"update_all=tftp $loadaddr venice/venice-test.img.gz && gzwrite mmc 2 $loadaddr $filesize\0" \
-	"erase_env=mmc dev 2; mmc erase 0x7f08 0x40\0" \
+	"update_firmware=tftp $loadaddr $image && setexpr blkcnt $filesize + 0x1ff && setexpr blkcnt $blkcnt / 0x200 && mmc dev $dev && mmc write $loadaddr 0x42 $blkcnt\0" \
+	"boot_net=tftp $kernel_addr_r $image && booti $kernel_addr_r - $fdtcontroladdr\0" \
+	"update_rootfs=tftp $loadaddr $image && gzwrite mmc $dev $loadaddr $filesize 100000 1000000\0" \
+	"update_all=tftp $loadaddr $image && gzwrite mmc $dev $loadaddr $filesize\0" \
+	"erase_env=mmc dev $dev; mmc erase 0x7f08 0x40\0" \
         BOOTENV
 
 /* Link Definitions */
