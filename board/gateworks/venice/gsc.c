@@ -451,7 +451,7 @@ static int gsc_info(int verbose)
 		}
 		printf("Model   : GW%c%c%c%c-%c%c-",
 			som_info.model[2], // family
-			base_info.model[4], // baseboard
+			base_info.model[3], // baseboard
 			base_info.model[4], base_info.model[5], // subload of baseboard
 			som_info.model[4], som_info.model[5]); // last 2digits of SOM
 
