@@ -17,6 +17,16 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* IMX8M integrated peripherals have a 32bit DMA thus can
+ * not access over a 32bit boundary which limits DRAM size
+ * to 3GiB (because DRAM starts at 1GiB)
+ *
+ * As a workaround until these drivers (fec/sdhc/usb) are fixed
+ * we will clamp to 3GiB and will adjust the dt back to the full
+ * DRAM size for Linux before booting
+ */
+#define DRAM_32BIT_BOUNDARY_WORKAROUND
+
 int board_phys_sdram_size(phys_size_t *size)
 {
 	int ddr_size = readl(M4_BOOTROM_BASE_ADDR);
@@ -33,6 +43,11 @@ int board_phys_sdram_size(phys_size_t *size)
 		printf("Unknown DDR type!!!\n");
 		*size = 0x40000000;
 	}
+
+#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
+	if (*size >= 0xc0000000)
+		*size = 0xc0000000;
+#endif
 
 	return 0;
 }
@@ -107,6 +122,48 @@ int board_mmc_get_env_dev(int devno)
 	return devno;
 }
 
+#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
+/*
+ * fdt_pack_reg - pack address and size array into the "reg"-suitable stream
+ */
+static int fdt_pack_reg(const void *fdt, void *buf, u64 address, u64 size)
+{
+	int address_cells = fdt_address_cells(fdt, 0);
+	int size_cells = fdt_size_cells(fdt, 0);
+	char *p = buf;
+
+	if (address_cells == 2)
+		*(fdt64_t *)p = cpu_to_fdt64(address);
+	else
+		*(fdt32_t *)p = cpu_to_fdt32(address);
+	p += 4 * address_cells;
+
+	if (size_cells == 2)
+		*(fdt64_t *)p = cpu_to_fdt64(size);
+	else
+		*(fdt32_t *)p = cpu_to_fdt32(size);
+	p += 4 * size_cells;
+
+	return p - (char *)buf;
+}
+
+static void venice_fixup_memory(void *fdt, int size_gb) {
+	const void *prop;
+	int memory;
+	int len;
+	u8 buf[16];
+
+	memory = fdt_path_offset(fdt, "/memory");
+	prop = fdt_getprop(fdt, memory, "reg", &len);
+
+	if (prop && len >= 16) {
+		len = fdt_pack_reg(fdt, buf, CONFIG_SYS_SDRAM_BASE,
+				   (u64)size_gb * 0x40000000);
+		fdt_setprop(fdt, memory, "reg", buf, len);
+	}
+}
+#endif // ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
+
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int i;
@@ -118,6 +175,15 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	i = fdt_node_offset_by_compatible(blob, -1, "fsl,imx8mm-fec");
 	if (i)
 		fdt_delprop(blob, i, "phy-reset-gpios");
+
+#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
+	/*
+	 * fixup memory
+	 */
+	i = readl(M4_BOOTROM_BASE_ADDR);
+	if (i > 3)
+		venice_fixup_memory(blob, i);
+#endif
 
 	return 0;
 }
