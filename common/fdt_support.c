@@ -447,6 +447,9 @@ int fdt_fixup_memory_banks(void *blob, u64 start[], u64 size[], int banks)
 		return err;
 	}
 
+if (size[0] == 0xc0000000) {
+	size[0] = 0x100000000;
+}
 	for (i = 0; i < banks; i++) {
 		if (start[i] == 0 && size[i] == 0)
 			break;
