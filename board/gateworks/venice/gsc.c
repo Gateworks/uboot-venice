@@ -471,7 +471,7 @@ static int gsc_info(int verbose)
 			printf("%c", rev_pcb);
 		puts("\n");
 		printf("Serial  : %d\n", som_info.serial);
-		printf("MfgDate : %02x-%02x-%02x%02x\n",
+		printf("MFGDate : %02x-%02x-%02x%02x\n",
 			som_info.mfgdate[0], som_info.mfgdate[1],
 			som_info.mfgdate[2], som_info.mfgdate[3]);
 	}
