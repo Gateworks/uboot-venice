@@ -89,53 +89,7 @@ int board_phy_config(struct phy_device *phydev)
 
 	return 0;
 }
-#endif
-
-#if !defined(DM_USB)
-#include <imx_sip.h>
-#include <usb.h>
-#include <asm/gpio.h>
-#include <asm/arch/imx8mm_pins.h>
-#include <asm/mach-imx/iomux-v3.h>
-
-#define USB1_HUB_RST IMX_GPIO_NR(1, 8)
-
-static iomux_v3_cfg_t const usb1_vbus_en_pads[] = {
-	IMX8MM_PAD_GPIO1_IO08_GPIO1_IO8 | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-int board_ehci_hcd_init(int index) {
-	debug("%s port%d\n", __func__, index);
-
-	if (index == 1) {
-		// enable power domain
-		call_imx_sip(IMX_SIP_GPC, IMX_SIP_GPC_PM_DOMAIN,
-			     2 + index, 1, 0);
-		// toggle HUB RST
-		imx_iomux_v3_setup_multiple_pads(usb1_vbus_en_pads,
-						ARRAY_SIZE(usb1_vbus_en_pads));
-		gpio_request(USB1_HUB_RST, "usb1_hub_rst#");
-		gpio_direction_output(USB1_HUB_RST, 0);
-		udelay(5);
-		gpio_direction_output(USB1_HUB_RST, 1);
-		mdelay(100);
-	}
-
-	return 0;
-}
-
-/* override driver version which always returns device
- * return either USB_INIT_DEVICE or USB_INIT_HOST
- */
-int board_usb_phy_mode(int index) {
-        debug("%s port%d\n", __func__, index);
-
-	if (index == 0)
-		return USB_INIT_DEVICE;
-
-	return USB_INIT_HOST;
-}
-#endif /* !defined DM_USB */
+#endif // IS_ENABLED(CONFIG_FEC_MXC)
 
 int board_init(void)
 {
