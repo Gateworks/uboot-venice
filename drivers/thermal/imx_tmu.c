@@ -352,6 +352,8 @@ static int imx_tmu_bind(struct udevice *dev)
 		return 0;
 
 	pdata->zone_node = 1;
+	pdata->critical = 85000;
+	pdata->alert = 105000;
 
 	node = ofnode_path("/thermal-zones");
 	ofnode_for_each_subnode(offset, node) {
@@ -443,6 +445,7 @@ static int imx_tmu_probe(struct udevice *dev)
 	if (pdata->zone_node) {
 		imx_tmu_init(dev);
 		imx_tmu_calibration(dev);
+		imx_tmu_enable_msite(dev);
 	} else {
 		imx_tmu_enable_msite(dev);
 	}
