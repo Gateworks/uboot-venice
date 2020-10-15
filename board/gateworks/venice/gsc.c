@@ -8,11 +8,15 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 
+#include <asm/mach-imx/gpio.h>
+#include <asm-generic/gpio.h>
+
 #include "gsc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #define GSC_PROBE_RETRY_MS 500
+#define PCIE_RSTJ IMX_GPIO_NR(4, 6)
 
 struct venice_board_info som_info;
 struct venice_board_info base_info;
@@ -503,6 +507,10 @@ int gsc_init(int quiet)
 	unsigned char buf[16];
 	struct udevice *dev;
 	int i, ret;
+
+	/* hold PCIe switch in reset to avoid i2c bus lock */
+	gpio_request(PCIE_RSTJ, "perst#");
+	gpio_direction_output(PCIE_RSTJ, 0);
 
 	/*
 	 * On a board with a missing/depleted backup battery for GSC, the
