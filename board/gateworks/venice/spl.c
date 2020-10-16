@@ -163,8 +163,8 @@ static int power_init(void)
 #define MP5416_VSET_SW3_SVAL(x) ((x-600000)/12500)
 #define MP5416_VSET_SW4_SVAL(x) ((x-800000)/25000)
 	puts("PMIC    : MP5416\n");
-	/* set SW3 to 0.9V for 1.6GHz */
-	reg = BIT(7) | MP5416_VSET_SW3_SVAL(900000);
+	/* set SW3 to 0.92V for 1.6GHz */
+	reg = BIT(7) | MP5416_VSET_SW3_SVAL(920000);
 	ret = dm_i2c_write(dev, MP5416_VSET_SW3, &reg, 1);
 	/* read rails */
 /*
