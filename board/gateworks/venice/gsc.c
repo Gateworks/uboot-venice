@@ -167,7 +167,8 @@ static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_inf
 	/* probe device */
 	dev = gsc_get_dev(bus, slave);
 	if (!dev) {
-		puts("ERROR: Failed to probe EEPROM\n");
+		if (slave == GSC_EEPROM_ADDR)
+			puts("ERROR: Failed to probe EEPROM\n");
 		return -ENODEV;
 	}
 
@@ -180,7 +181,8 @@ static int gsc_read_eeprom(int bus, int slave, int alen, struct venice_board_inf
 	}
 	ret = dm_i2c_read(dev, 0x00, buf, sizeof(*info));
 	if (ret) {
-		puts("EEPROM: Failed to read EEPROM\n");
+		if (slave == GSC_EEPROM_ADDR)
+			printf("EEPROM: Failed to read EEPROM\n");
 		return ret;
 	}
 
