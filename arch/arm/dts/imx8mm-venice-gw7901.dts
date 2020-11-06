@@ -256,7 +256,7 @@
 
 	fixed-link {
 		speed = <1000>;
-		full-deuplex;
+		full-duplex;
 	};
 };
 
