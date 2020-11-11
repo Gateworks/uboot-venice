@@ -68,14 +68,21 @@ int board_phy_config(struct phy_device *phydev)
 {
 	unsigned short val;
 
-        /* TI DP83867 */
-	if (phydev->phy_id == 0x2000a231) {
+	switch(phydev->phy_id) {
+	case 0x2000a231: /* TI DP83867 GbE PHY */
 		puts("DP83867 ");
 		/* LED configuration */
 		val = 0;
 		val |= 0x5 << 4; /* LED1(Amber;Speed)   : 1000BT link */
 		val |= 0xb << 8; /* LED2(Green;Link/Act): blink for TX/RX act */
 		phy_write(phydev, MDIO_DEVAD_NONE, 24, val);
+		break;
+	case 0x00989700: /* KSZ9897S GbE Switch */
+		puts("KSZ9897S ");
+		/* Note: phy_read/write will translate to ksz_pread16/pwrite16
+		 * thus can only get at port specific registers and can't
+		 * configure LED's here */
+		break;
 	}
 
 	if (phydev->drv->config)
