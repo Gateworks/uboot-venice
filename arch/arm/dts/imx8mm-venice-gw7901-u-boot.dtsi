@@ -113,10 +113,6 @@
         u-boot,dm-spl;
 };
 
-&pinctrl_i2c2 {
-        u-boot,dm-spl;
-};
-
 &pinctrl_pmic {
         u-boot,dm-spl;
 };
