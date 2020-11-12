@@ -764,6 +764,11 @@ F:	drivers/sysreset/sysreset_gpio.c
 F:	drivers/watchdog/xilinx_tb_wdt.c
 N:	xilinx
 
+MICROCHIP KSZ9477
+M:	Tim Harvey <tharvey@gateworks.com>
+S:	Maintained
+F:	drivers/net/phy/ksz9477.c
+
 MIPS
 M:	Daniel Schwierzeck <daniel.schwierzeck@gmail.com>
 S:	Maintained

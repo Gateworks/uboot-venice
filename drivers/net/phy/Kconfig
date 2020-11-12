@@ -2,6 +2,35 @@
 config BITBANGMII
 	bool "Bit-banged ethernet MII management channel support"
 
+config KSZ9477_SWITCH
+	bool "Microchip KSZ9477 GbE Switch support"
+	help
+	  Enable support for the I2C GbE Switches manufactured by Microchip
+	  including the KSZ9477, KSZ9897, KSZ9893, KSZ9567.
+
+if KSZ9477_SWITCH
+
+config KSZ9477_CPU_PORT
+	int "CPU Port"
+	default 5
+
+config KSZ9477_PHY_PORTS
+	hex "Bitmask of PHY Ports"
+	default 0x1f
+
+config KSZ9477_I2C_BUSNO
+	int "I2C bus number"
+
+config KSZ9477_INTERFACE_MODE
+	string "Interface mode"
+	default "rgmii-id"
+
+config KSZ9477_LED_SINGLE_MODE
+	bool "Single-LED mode"
+	default y
+
+endif # KSZ9477_SWITCH
+
 config MV88E6352_SWITCH
 	bool "Marvell 88E6352 switch support"
 

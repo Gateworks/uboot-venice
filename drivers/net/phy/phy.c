@@ -485,6 +485,9 @@ int phy_init(void)
 #ifdef CONFIG_B53_SWITCH
 	phy_b53_init();
 #endif
+#ifdef CONFIG_KSZ9477_SWITCH
+	phy_ksz9477_init();
+#endif
 #ifdef CONFIG_MV88E61XX_SWITCH
 	phy_mv88e61xx_init();
 #endif
