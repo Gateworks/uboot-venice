@@ -683,6 +683,9 @@
 	non-removable;
 	vmmc-supply = <&reg_wifi>;
 	status = "okay";
+#ifndef REVB  // next-rev
+	no-1-8-v;
+#endif
 };
 
 &usdhc2 { /* microSD */
