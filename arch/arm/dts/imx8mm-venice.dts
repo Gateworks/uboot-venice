@@ -531,6 +531,18 @@
 
 &iomuxc {
 	pinctrl-names = "default";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_hog>;
+
+        pinctrl_hog: hoggrp {
+                fsl,pins = <
+			MX8MM_IOMUXC_SPDIF_TX_GPIO5_IO3		0x40000041 /* PLUG_TEST */
+			MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6	0x40000041 /* PCI_USBSEL */
+			MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7	0x40000041 /* PCIE_WDIS# */
+			MX8MM_IOMUXC_GPIO1_IO07_GPIO1_IO7	0x40000041 /* DIO0 */
+			MX8MM_IOMUXC_GPIO1_IO09_GPIO1_IO9	0x40000041 /* DIO1 */
+		>;
+	};
 
 	pinctrl_accel: accelirq {
 		fsl,pins = <
