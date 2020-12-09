@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <dt-bindings/usb/pd.h>
+#include <dt-bindings/input/linux-event-codes.h>
 #include "imx8mm.dtsi"
 
 / {
@@ -36,38 +37,45 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		user_pb {
+			label = "user_pb";
+			gpios = <&gsc_gpio 2 GPIO_ACTIVE_LOW>;
+			linux,code = <BTN_0>;
+		};
+
 		user_pb1x {
 			label = "user_pb1x";
-			linux,code = <256>; /* BTN_0 */
+			linux,code = <BTN_1>;
 			interrupt-parent = <&gsc>;
 			interrupts = <0>;
 		};
 
 		key_erased {
 			label = "key-erased";
-			linux,code = <257>; /* BTN_1 */
+			linux,code = <BTN_2>;
 			interrupt-parent = <&gsc>;
 			interrupts = <1>;
 		};
 
 		eeprom_wp {
 			label = "eeprom_wp";
-			linux,code = <258>; /* BTN_2 */
+			linux,code = <BTN_3>;
 			interrupt-parent = <&gsc>;
 			interrupts = <2>;
 		};
 
-		switch_hold {
-			label = "switch_hold";
-			linux,code = <261>; /* BTN_5 */
+		tamper {
+			label = "tamper";
+			linux,code = <BTN_4>;
 			interrupt-parent = <&gsc>;
-			interrupts = <7>;
+			interrupts = <5>;
 		};
 
-		user_pb {
-			label = "user_pb";
-			gpios = <&gsc_gpio 2 GPIO_ACTIVE_LOW>;
-			linux,code = <259>; /* BTN_3 */
+		switch_hold {
+			label = "switch_hold";
+			linux,code = <BTN_5>;
+			interrupt-parent = <&gsc>;
+			interrupts = <7>;
 		};
 	};
 
