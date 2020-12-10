@@ -691,9 +691,6 @@
 	non-removable;
 	vmmc-supply = <&reg_wifi>;
 	status = "okay";
-#ifndef REVB  // next-rev
-	no-1-8-v;
-#endif
 };
 
 &usdhc2 { /* microSD */
@@ -706,6 +703,9 @@
 	cd-gpios = <&gpio2 12 GPIO_ACTIVE_LOW>;
 	bus-width = <4>;
 	vmmc-supply = <&reg_3p3v>;
+#ifndef REVB  // next-rev
+	no-1-8-v;
+#endif
 	status = "okay";
 };
 
