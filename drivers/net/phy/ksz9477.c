@@ -3,6 +3,7 @@
  * (C) Copyright 2020
  * Tim Harvey, Gateworks Corporation
  */
+#include <command.h>
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <errno.h>
@@ -10,6 +11,7 @@
 #include <malloc.h>
 #include <miiphy.h>
 #include <i2c.h>
+#include <linux/delay.h>
 
 #define KSZ9477_I2C_SLAVE		0x5f
 
@@ -58,6 +60,8 @@ struct ksz_phy_priv {
 	int phy_port_cpu;
 	int phy_ports;
 };
+
+struct phy_device *ksz_phy;
 
 static inline int ksz_read8(struct udevice *dev, u32 reg, u8 *val)
 {
@@ -404,6 +408,7 @@ static int ksz9477_probe(struct phy_device *phydev)
 
 	phydev->bus = bus;
 	phydev->priv = priv;
+	ksz_phy = phydev;
 
 	return 0;
 
@@ -458,19 +463,6 @@ static int ksz9477_phy_config(struct phy_device *phydev)
 	return ret;
 }
 
-static int ksz9477_phy_is_connected(struct phy_device *phydev)
-{
-	struct ksz_phy_priv *priv = phydev->priv;
-	struct udevice *dev = priv->dev;
-	u16 data16;
-	int port = phydev->addr;
-
-	ksz_pread16(dev, port, 0x100 + (MII_BMSR << 1), &data16);
-	dev_dbg(dev, "%s P%d link=%d\n", __func__, port + 1, (data16 & BMSR_LSTATUS) ? 1 : 0);
-
-	return (data16 & BMSR_LSTATUS) ? 1 : 0;
-}
-
 static int ksz9477_phy_startup(struct phy_device *phydev)
 {
 	struct ksz_phy_priv *priv = phydev->priv;
@@ -479,13 +471,14 @@ static int ksz9477_phy_startup(struct phy_device *phydev)
 	int speed = phydev->speed;
 	int duplex = phydev->duplex;
 	int ret;
+	u16 reg;
 
 	dev_dbg(priv->dev, "%s\n", __func__);
 	for (i = 0; i < priv->phy_port_cnt; i++) {
 		if ((1 << i) & priv->phy_ports) {
 			phydev->addr = i;
-			/* skip if not linked to avoid timeout waiting for aneg */
-			if (!ksz9477_phy_is_connected(phydev))
+			reg = ksz9477_phy_read_indirect(phydev->bus, 0, 0, MII_BMSR);
+			if (!(reg & BMSR_LSTATUS))
 				continue;
 			ret = genphy_update_link(phydev);
 			if (ret < 0)
@@ -575,3 +568,94 @@ int get_phy_id(struct mii_dev *miibus, int smi_addr, int devad, u32 *phy_id)
 
 	return 0;
 }
+
+static int ksz_info(struct phy_device *phydev)
+{
+	struct ksz_phy_priv *priv = phydev->priv;
+	int i, ret;
+	u16 reg;
+
+	printf("phy_id: 0x%08x\n", phydev->phy_id);
+	printf("bus: %s@%d\n", priv->mdio_bus->name /*phydev->bus->name*/, phydev->addr);
+	puts("interface: ");
+	switch(priv->interface) {
+	case PHY_INTERFACE_MODE_MII:
+		puts("MII");
+		break;
+	case PHY_INTERFACE_MODE_RMII:
+		puts("RMII");
+		break;
+	case PHY_INTERFACE_MODE_GMII:
+		puts("GMII");
+		break;
+	case PHY_INTERFACE_MODE_RGMII_ID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+		puts("RGMII");
+		break;
+	default:
+		break;
+	}
+	puts("\n");
+	printf("CPU: P%d\n", priv->phy_port_cpu + 1);
+	printf("Ports: 0x%x\n", priv->phy_ports);
+	for (i = 0; i < priv->phy_port_cnt; i++) {
+		if (!((1 << i) & priv->phy_ports))
+			continue;
+		printf("P%d: ", i + 1);
+		phydev->addr = i;
+		reg = ksz9477_phy_read_indirect(phydev->bus, 0, 0, MII_BMSR);
+printf("MBSR=0x%04x ", reg);
+		if (!(reg & BMSR_LSTATUS)) {
+			puts("no link\n");
+			continue;
+		}
+		ret = genphy_update_link(phydev);
+		if (ret < 0)
+			continue;
+		ret = genphy_parse_link(phydev);
+		if (ret < 0)
+			continue;
+		printf("link %dmbps %s duplex\n", phydev->speed,
+			(phydev->duplex = DUPLEX_FULL) ? "full" : "half");
+	}
+	puts("\n");
+
+	return CMD_RET_SUCCESS;
+};
+
+static int ksz_config(struct phy_device *phydev, int ports)
+{
+	struct ksz_phy_priv *priv = phydev->priv;
+	int i, ret;
+
+	priv->phy_ports = ports;
+	ret = ksz9477_phy_config(ksz_phy);
+
+	/* wait 5 secs for link negotiation */
+	for (i = 0; i < 5; i++) {
+		puts(".");
+		mdelay(1000);
+	}
+	puts("\n");
+
+	return ksz_info(phydev);
+}
+
+static int do_ksz(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc < 2)
+		return ksz_info(ksz_phy);
+	if (argv[1][0] == 'p') {
+		if (argc < 3)
+			return CMD_RET_USAGE;
+		if (!ksz_config(ksz_phy, simple_strtoul(argv[2], NULL, 16)))
+			return CMD_RET_SUCCESS;
+	}
+
+	return CMD_RET_USAGE;
+}
+
+U_BOOT_CMD(
+	ksz, 4, 1, do_ksz, "KSZ9477 switch config", "[ports <portmask>]\n"
+	);
