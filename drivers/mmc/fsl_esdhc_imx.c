@@ -1293,8 +1293,30 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 			val |= ESDHC_TUNING_CMD_CRC_CHECK_DISABLE;
 			esdhc_write32(&regs->tuning_ctrl, val);
 		}
-	}
 
+		if (CONFIG_IS_ENABLED(MMC_UHS_SUPPORT)) {
+			cfg->host_caps |= MMC_CAP(UHS_SDR12);
+			cfg->host_caps |= MMC_CAP(UHS_SDR25);
+			cfg->host_caps |= MMC_CAP(UHS_SDR50);
+			cfg->host_caps |= MMC_CAP(UHS_SDR104);
+			cfg->host_caps |= MMC_CAP(UHS_DDR50);
+		}
+
+		if (CONFIG_IS_ENABLED(MMC_HS200_SUPPORT)) {
+			if (priv->flags & ESDHC_FLAG_HS200)
+				cfg->host_caps |= MMC_CAP(MMC_HS_200);
+		}
+
+		if (CONFIG_IS_ENABLED(MMC_HS400_SUPPORT)) {
+			if (priv->flags & ESDHC_FLAG_HS400)
+				cfg->host_caps |= MMC_CAP(MMC_HS_400);
+		}
+
+		if (CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)) {
+			if (priv->flags & ESDHC_FLAG_HS400_ES)
+				cfg->host_caps |= MMC_CAP(MMC_HS_400_ES);
+		}
+	}
 	return 0;
 }
 
