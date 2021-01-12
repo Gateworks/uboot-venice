@@ -93,6 +93,12 @@ int board_phy_config(struct phy_device *phydev)
 		val |= 0xb << 8; /* LED2(Green;Link/Act): blink for TX/RX act */
 		phy_write(phydev, MDIO_DEVAD_NONE, 24, val);
 		break;
+	case 0x00989700: /* KSZ9897S GbE Switch */
+		puts("KSZ9897S ");
+		/* Note: phy_read/write will translate to ksz_pread16/pwrite16
+		 * thus can only get at port specific registers and can't
+		 * configure LED's here */
+		break;
 	}
 
 	if (phydev->drv->config)

@@ -88,16 +88,47 @@ int board_early_init_f(void)
 static int power_init_board(void)
 {
 	struct udevice *dev;
+	const char *model = gsc_get_model();
 	int ret;
 
-	/* attempt to probe PMIC on GW700x SoM */
-	ret = i2c_get_chip_for_busnum(2, 0x69, 1, &dev);
-	if (ret)
-		return ret;
-	puts("PMIC    : MP5416\n");
-	/* set VDD_ARM SW3 to 0.92V for 1.6GHz */
-	pmic_reg_write(dev, MP5416_VSET_SW3,
-		       BIT(7) | MP5416_VSET_SW3_SVAL(920000));
+	if (!strncmp(model, "GW7901", 6)) {
+		ret = i2c_get_chip_for_busnum(2, 0x4b, 1, &dev);
+		if (ret)
+			return ret;
+		puts("PMIC    : BD71847\n");
+
+		/* unlock the PMIC regs */
+		pmic_reg_write(dev, BD718XX_REGLOCK, 0x1);
+
+		/* set switchers to forced PWM mode */
+		pmic_clrsetbits(dev, BD718XX_BUCK1_CTRL, 0, 0x8);
+		pmic_clrsetbits(dev, BD718XX_BUCK2_CTRL, 0, 0x8);
+		pmic_clrsetbits(dev, BD718XX_1ST_NODVS_BUCK_CTRL, 0, 0x8);
+		pmic_clrsetbits(dev, BD718XX_2ND_NODVS_BUCK_CTRL, 0, 0x8);
+		pmic_clrsetbits(dev, BD718XX_4TH_NODVS_BUCK_CTRL, 0, 0x8);
+
+		/* increase VDD_0P95 (VDD_GPU/VPU/DRAM) to 0.975v for 1.5Ghz DDR */
+		pmic_reg_write(dev, BD718XX_1ST_NODVS_BUCK_VOLT, 0x83);
+
+		/* increase VDD_SOC to 0.85v before first DRAM access */
+		pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0x0f);
+
+		/* increase VDD_ARM to 0.92v for 800 and 1600Mhz */
+		pmic_reg_write(dev, BD718XX_BUCK2_VOLT_RUN, 0x16);
+
+		/* Lock the PMIC regs */
+		pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
+	}
+
+	else if (!strncmp(model, "GW730", 5)) {
+		ret = i2c_get_chip_for_busnum(2, 0x69, 1, &dev);
+		if (ret)
+			return ret;
+		puts("PMIC    : MP5416\n");
+		/* set VDD_ARM SW3 to 0.92V for 1.6GHz */
+		pmic_reg_write(dev, MP5416_VSET_SW3,
+			       BIT(7) | MP5416_VSET_SW3_SVAL(920000));
+	}
 
 	return 0;
 }
