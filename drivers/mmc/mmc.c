@@ -579,6 +579,7 @@ static int mmc_switch_voltage(struct mmc *mmc, int signal_voltage)
 	 * dat[0:3] low. Wait for at least 1 ms according to spec
 	 */
 	err = mmc_wait_dat0(mmc, 1, 1000);
+printf("%s ret=%d\n", __func__, err);
 	if (err == -ENOSYS)
 		udelay(1000);
 	else if (err)
