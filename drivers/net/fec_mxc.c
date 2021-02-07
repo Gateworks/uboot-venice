@@ -1470,7 +1470,7 @@ static int fecmxc_probe(struct udevice *dev)
 	}
 
 #ifdef CONFIG_DM_ETH_PHY
-	eth_phy_set_mdio_bus(dev, bus);
+	eth_phy_set_mdio_bus(dev, dev, bus);
 #endif
 
 	priv->bus = bus;

@@ -2039,7 +2039,7 @@ static int eqos_probe(struct udevice *dev)
 	}
 
 #ifdef CONFIG_DM_ETH_PHY
-	eth_phy_set_mdio_bus(dev, eqos->mii);
+	eth_phy_set_mdio_bus(dev, dev, eqos->mii);
 #endif
 
 	debug("%s: OK\n", __func__);

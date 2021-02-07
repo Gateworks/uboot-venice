@@ -12,6 +12,7 @@
 
 struct eth_phy_device_priv {
 	struct mii_dev *mdio_bus;
+	struct udevice *eth_dev;
 };
 
 int eth_phy_binds_nodes(struct udevice *eth_dev)
@@ -46,49 +47,27 @@ int eth_phy_binds_nodes(struct udevice *eth_dev)
 	return 0;
 }
 
-int eth_phy_set_mdio_bus(struct udevice *eth_dev, struct mii_dev *mdio_bus)
+int eth_phy_set_mdio_bus(struct udevice *phy_dev, struct udevice *eth_dev, struct mii_dev *mdio_bus)
 {
-	struct udevice *dev;
-	struct eth_phy_device_priv *uc_priv;
+	struct eth_phy_device_priv *uc_priv = (struct eth_phy_device_priv *)(phy_dev->uclass_priv);
 
-	for (uclass_first_device(UCLASS_ETH_PHY, &dev); dev;
-	     uclass_next_device(&dev)) {
-		if (dev->parent == eth_dev) {
-			uc_priv = (struct eth_phy_device_priv *)(dev->uclass_priv);
-
-			if (!uc_priv->mdio_bus)
-				uc_priv->mdio_bus = mdio_bus;
-		}
-	}
+	uc_priv->eth_dev = eth_dev;
+	uc_priv->mdio_bus = mdio_bus;
 
 	return 0;
 }
 
 struct mii_dev *eth_phy_get_mdio_bus(struct udevice *eth_dev)
 {
-	int ret;
 	struct udevice *phy_dev;
 	struct eth_phy_device_priv *uc_priv;
 
-	/* Will probe the parent of phy device, then phy device */
-	ret = uclass_get_device_by_phandle(UCLASS_ETH_PHY, eth_dev,
-					   "phy-handle", &phy_dev);
-	if (!ret) {
-		if (eth_dev != phy_dev->parent) {
-			/*
-			 * phy_dev is shared and controlled by
-			 * other eth controller
-			 */
-			uc_priv = (struct eth_phy_device_priv *)(phy_dev->uclass_priv);
-			if (uc_priv->mdio_bus)
-				printf("Get shared mii bus on %s\n", eth_dev->name);
-			else
-				printf("Can't get shared mii bus on %s\n", eth_dev->name);
-
+	/* Iterate over UCLASS_ETH_PHY devices looking for a eth_dev match */
+	uclass_foreach_dev_probe(UCLASS_ETH_PHY, phy_dev) {
+		uc_priv = (struct eth_phy_device_priv *)(phy_dev->uclass_priv);
+		if (uc_priv->eth_dev == eth_dev) {
 			return uc_priv->mdio_bus;
 		}
-	} else {
-		printf("FEC: can't find phy-handle\n");
 	}
 
 	return NULL;
