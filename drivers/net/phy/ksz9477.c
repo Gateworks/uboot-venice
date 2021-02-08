@@ -448,6 +448,8 @@ static int ksz9477_probe(struct udevice *dev)
 		dev_dbg(dev, "%s:P%d %s %s\n", ofnode_get_name(port_node),
 			i, label, phy_mode ? phy_mode : "");
 	}
+	/* allow env var to override phy port config */
+	priv->phy_ports = env_get_hex("ksz_portmask", priv->phy_ports);
 	if (!priv->phy_port_cpu) {
 		dev_err(dev, "no cpu port defined\n");
 		return -EINVAL;
