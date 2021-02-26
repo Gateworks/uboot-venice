@@ -220,6 +220,7 @@ static int power_init(void)
 	pmic_clrsetbits(dev, BD718XX_BUCK2_CTRL, 0, 0x8);
 	pmic_clrsetbits(dev, BD718XX_1ST_NODVS_BUCK_CTRL, 0, 0x8);
 	pmic_clrsetbits(dev, BD718XX_2ND_NODVS_BUCK_CTRL, 0, 0x8);
+	pmic_clrsetbits(dev, BD718XX_3RD_NODVS_BUCK_CTRL, 0, 0x8);
 	pmic_clrsetbits(dev, BD718XX_4TH_NODVS_BUCK_CTRL, 0, 0x8);
 
 	/* increase VDD_0P95 (VDD_GPU/VPU/DRAM) to 0.975v for 1.5Ghz DDR */
