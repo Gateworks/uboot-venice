@@ -108,17 +108,38 @@ static int dm_i2c_clrsetbits(struct udevice *dev, uint reg, uint clr, uint set)
 
 static int power_init_board(void)
 {
-	struct udevice *dev;
-	struct udevice *bus;
 	const char *model = gsc_get_model();
+	struct udevice *bus;
+	struct udevice *dev;
 	int ret;
 
-	ret = uclass_get_device_by_name(UCLASS_I2C, "i2c@30a30000", &bus);
-	if (ret) {
-		printf("PMIC    : failed I2C1 probe: %d\n", ret);
-		return ret;
+	if ( (!strncmp(model, "GW71", 4)) ||
+	     (!strncmp(model, "GW72", 4)) ||
+	     (!strncmp(model, "GW73", 4)) )
+	{
+		ret = uclass_get_device_by_name(UCLASS_I2C, "i2c@30a20000", &bus);
+		if (ret) {
+			printf("PMIC    : failed I2C1 probe: %d\n", ret);
+			return ret;
+		}
+		ret = dm_i2c_probe(bus, 0x69, 0, &dev);
+		if (ret) {
+			printf("PMIC    : failed probe: %d\n", ret);
+			return ret;
+		}
+		puts("PMIC    : MP5416\n");
+
+		/* set VDD_ARM SW3 to 0.92V for 1.6GHz */
+		dm_i2c_reg_write(dev, MP5416_VSET_SW3,
+			       BIT(7) | MP5416_VSET_SW3_SVAL(920000));
 	}
-	if (!strncmp(model, "GW7901", 6)) {
+
+	else if (!strncmp(model, "GW7901", 6)) {
+		ret = uclass_get_device_by_name(UCLASS_I2C, "i2c@30a30000", &bus);
+		if (ret) {
+			printf("PMIC    : failed I2C2 probe: %d\n", ret);
+			return ret;
+		}
 		ret = dm_i2c_probe(bus, 0x4b, 0, &dev);
 		if (ret) {
 			printf("PMIC    : failed probe: %d\n", ret);
@@ -148,21 +169,6 @@ static int power_init_board(void)
 
 		/* Lock the PMIC regs */
 		dm_i2c_reg_write(dev, BD718XX_REGLOCK, 0x11);
-	}
-
-	else if (!strncmp(model, "GW730", 5)) {
-		ret = i2c_get_chip_for_busnum(2, 0x69, 1, &dev);
-		if (ret)
-			return ret;
-		ret = dm_i2c_probe(bus, 0x69, 0, &dev);
-		if (ret) {
-			printf("PMIC    : failed probe: %d\n", ret);
-			return ret;
-		}
-		puts("PMIC    : MP5416\n");
-		/* set VDD_ARM SW3 to 0.92V for 1.6GHz */
-		dm_i2c_reg_write(dev, MP5416_VSET_SW3,
-			       BIT(7) | MP5416_VSET_SW3_SVAL(920000));
 	}
 
 	return 0;
