@@ -454,6 +454,10 @@
 		interrupt-parent = <&gpio3>;
 		interrupts = <20 IRQ_TYPE_LEVEL_LOW>;
 
+		#clock-cells = <0>;
+		clocks = <&osc_32k 0>;
+		clock-output-names = "clk-32k-out";
+
 		regulators {
 			/* vdd_soc: 0.805-0.900V (typ=0.8V) */
 			BUCK1 {
