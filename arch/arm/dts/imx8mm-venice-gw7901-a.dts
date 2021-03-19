@@ -453,6 +453,7 @@
 		pinctrl-0 = <&pinctrl_pmic>;
 		interrupt-parent = <&gpio3>;
 		interrupts = <20 IRQ_TYPE_LEVEL_LOW>;
+		rohm,reset-snvs-powered;
 
 		#clock-cells = <0>;
 		clocks = <&osc_32k 0>;
