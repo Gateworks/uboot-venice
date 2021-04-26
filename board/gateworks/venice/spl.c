@@ -44,6 +44,9 @@ static void spl_dram_init(int size)
 	case 1:
 		dram_timing = &dram_timing_1gb;
 		break;
+	case 2:
+		dram_timing = &dram_timing_2gb;
+		break;
 	case 4:
 		dram_timing = &dram_timing_4gb;
 		break;
