@@ -782,6 +782,8 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-verdin.dtb \
 	phycore-imx8mm.dtb \
 	imx8mn-ddr4-evk.dtb \
+	imx8mn-venice.dtb \
+	imx8mn-venice-gw7902.dtb \
 	imx8mq-evk.dtb \
 	imx8mm-beacon-kit.dtb \
 	imx8mq-phanbell.dtb \
