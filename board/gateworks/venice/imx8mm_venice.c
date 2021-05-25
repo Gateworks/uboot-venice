@@ -112,9 +112,10 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif // IS_ENABLED(CONFIG_FEC_MXC)
 
+int size_gb;
 int board_init(void)
 {
-	gsc_init(1);
+	size_gb = gsc_init(1);
 
 	if (IS_ENABLED(CONFIG_FEC_MXC))
 		setup_fec();
@@ -214,15 +215,10 @@ static void venice_fixup_memory(void *fdt, int size_gb) {
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	int i;
-
 #ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
-	/*
-	 * fixup memory
-	 */
-	i = readl(M4_BOOTROM_BASE_ADDR);
-	if (i > 3)
-		venice_fixup_memory(blob, i);
+	/* fixup memory if we had to adjust it down */
+	if (size_gb >= 3)
+		venice_fixup_memory(blob, size_gb);
 #endif
 
 	return 0;
