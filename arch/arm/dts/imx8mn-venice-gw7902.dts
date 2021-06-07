@@ -8,6 +8,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/linux-event-codes.h>
 #include <dt-bindings/leds/common.h>
+#include <dt-bindings/net/ti-dp83867.h>
 
 #include "imx8mn.dtsi"
 
@@ -77,6 +78,52 @@
 			linux,code = <BTN_5>;
 			interrupt-parent = <&gsc>;
 			interrupts = <7>;
+		};
+	};
+
+	led-controller {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_leds>;
+
+		led-0 {
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+			label = "panel1";
+			gpios = <&gpio3 21 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+		};
+
+		led-1 {
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+			label = "panel2";
+			gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+		};
+
+		led-2 {
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+			label = "panel3";
+			gpios = <&gpio3 22 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+		};
+
+		led-3 {
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+			label = "panel4";
+			gpios = <&gpio3 20 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+		};
+
+		led-4 {
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+			label = "panel5";
+			gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
+			default-state = "off";
 		};
 	};
 
@@ -185,12 +232,22 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_fec1>;
 	phy-mode = "rgmii-id";
+	phy-handle = <&ethphy0>;
 	local-mac-address = [00 00 00 00 00 00];
 	status = "okay";
 
-	fixed-link {
-		speed = <1000>;
-		full-duplex;
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy0: ethernet-phy@0 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+			ti,rx-internal-delay = <DP83867_RGMIIDCTL_2_00_NS>;
+			ti,tx-internal-delay = <DP83867_RGMIIDCTL_2_00_NS>;
+			tx-fifo-depth = <DP83867_PHYCR_FIFO_DEPTH_4_B_NIB>;
+			rx-fifo-depth = <DP83867_PHYCR_FIFO_DEPTH_4_B_NIB>;
+		};
 	};
 };
 
@@ -582,10 +639,10 @@
 
 	pinctrl_hog: hoggrp {
 		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO05_GPIO1_IO5	0x40000041 /* M2_GDIS# */
-			MX8MN_IOMUXC_GPIO1_IO13_GPIO1_IO13	0x40000041 /* M2_RST# */
-			MX8MN_IOMUXC_GPIO1_IO14_GPIO1_IO14	0x40000041 /* M2_OFF# */
-			MX8MN_IOMUXC_GPIO1_IO15_GPIO1_IO15	0x40000041 /* M2_WDIS# */
+			MX8MN_IOMUXC_NAND_CE0_B_GPIO3_IO1	0x40000159 /* M2_GDIS# */
+			MX8MN_IOMUXC_GPIO1_IO12_GPIO1_IO12	0x40000041 /* M2_RST# */
+			MX8MN_IOMUXC_NAND_DATA01_GPIO3_IO7	0x40000119 /* M2_OFF# */
+			MX8MN_IOMUXC_GPIO1_IO15_GPIO1_IO15	0x40000159 /* M2_WDIS# */
 			MX8MN_IOMUXC_SAI2_RXFS_GPIO4_IO21	0x40000041 /* APP GPIO1 */
 			MX8MN_IOMUXC_SAI2_MCLK_GPIO4_IO27	0x40000041 /* APP GPIO2 */
 			MX8MN_IOMUXC_SD1_DATA6_GPIO2_IO8	0x40000041 /* UART2_EN# */
@@ -598,7 +655,7 @@
 
 	pinctrl_accel: accelgrp {
 		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO12_GPIO1_IO12	0x59
+			MX8MN_IOMUXC_GPIO1_IO12_GPIO1_IO12	0x159
 		>;
 	};
 
@@ -620,8 +677,8 @@
 			MX8MN_IOMUXC_ENET_TX_CTL_ENET1_RGMII_TX_CTL	0x1f
 			MX8MN_IOMUXC_GPIO1_IO10_GPIO1_IO10		0x19 /* RST# */
 			MX8MN_IOMUXC_GPIO1_IO11_GPIO1_IO11		0x19 /* IRQ# */
-			MX8MN_IOMUXC_GPIO1_IO08_ENET1_1588_EVENT0_IN	0x41
-			MX8MN_IOMUXC_GPIO1_IO09_ENET1_1588_EVENT0_OUT	0x41
+			MX8MN_IOMUXC_GPIO1_IO08_ENET1_1588_EVENT0_IN	0x141
+			MX8MN_IOMUXC_GPIO1_IO09_ENET1_1588_EVENT0_OUT	0x141
 		>;
 	};
 
@@ -659,6 +716,16 @@
 		>;
 	};
 
+	pinctrl_gpio_leds: gpioledgrp {
+		fsl,pins = <
+			MX8MN_IOMUXC_SAI5_RXD0_GPIO3_IO21	0x19 /* LED PANEL1 */
+			MX8MN_IOMUXC_SAI5_RXD2_GPIO3_IO23	0x19 /* LED PANEL2 */
+			MX8MN_IOMUXC_SAI5_RXD1_GPIO3_IO22	0x19 /* LED PANEL3 */
+			MX8MN_IOMUXC_SAI5_RXC_GPIO3_IO20	0x19 /* LED PANEL4 */
+			MX8MN_IOMUXC_SAI5_MCLK_GPIO3_IO25	0x19 /* LED PANEL5 */
+		>;
+	};
+
 	pinctrl_pmic: pmicgrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_NAND_DATA02_GPIO3_IO8	0x41
@@ -667,7 +734,7 @@
 
 	pinctrl_pps: ppsgrp {
 		fsl,pins = <
-			MX8MN_IOMUXC_SAI5_RXD3_GPIO3_IO24	0x41 /* PPS */
+			MX8MN_IOMUXC_SAI5_RXD3_GPIO3_IO24	0x141 /* PPS */
 		>;
 	};
 
