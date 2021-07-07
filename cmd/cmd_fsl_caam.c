@@ -7,7 +7,7 @@
 #include <command.h>
 #include <fsl_caam.h>
 
-static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_caam(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret, i;
 
@@ -29,7 +29,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return CMD_RET_USAGE;
 
 		caam_open();
-		ret = caam_gen_blob((uint32_t)data_addr, (uint32_t)blob_addr, (uint32_t)size);
+		ret = caam_gen_blob((uintptr_t)data_addr, (uintptr_t)blob_addr, (uint32_t)size);
 
 		if (ret != SUCCESS) {
 			printf("Error during blob encap operation: 0x%x\n", ret);
@@ -37,7 +37,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 		/* Print the generated DEK blob */
-		printf("DEK blob is available at 0x%08X and equals:\n", (unsigned int)blob_addr);
+		printf("DEK blob is available at 0x%0lx and equals:\n", (uintptr_t)blob_addr);
 		for (i = 0; i < size; i++)
 			printf("%02X ", ((uint8_t *)blob_addr)[i]);
 		printf("\n\n");
@@ -58,7 +58,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return CMD_RET_USAGE;
 
 		caam_open();
-		ret = caam_decap_blob((uint32_t)(data_addr), (uint32_t)(blob_addr), (uint32_t)size);
+		ret = caam_decap_blob((uintptr_t)(data_addr), (uintptr_t)(blob_addr), (uint32_t)size);
 		if (ret != SUCCESS) {
 			printf("Error during blob decap operation: 0x%x\n", ret);
 		} else {

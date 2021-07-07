@@ -12,6 +12,7 @@
 #else
 #include <asm/arch/pcc.h>
 #endif /* CONFIG_ARCH_MX7ULP */
+#include <asm/global_data.h>
 #include "fsl_caam_internal.h"
 #include "fsl/desc_constr.h"
 #include <fsl_caam.h>
