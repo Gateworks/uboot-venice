@@ -101,11 +101,16 @@ static void spl_dram_init(int size)
 #endif
 #ifdef CONFIG_IMX8MN
 	case 2:
-		dram_timing = &dram_timing_2gb;
+		if (!strcmp(gsc_get_model(), "GW7902-SP466-A") ||
+		    !strcmp(gsc_get_model(), "GW7902-SP466-B")) {
+			dram_timing = &dram_timing_2gb_dual_die;
+		} else {
+			dram_timing = &dram_timing_2gb_single_die;
+		}
 		break;
 	default:
 		printf("Unknown DDR configuration: %d GiB\n", size);
-		dram_timing = &dram_timing_2gb;
+		dram_timing = &dram_timing_2gb_dual_die;
 		size = 2;
 #endif
 	}
