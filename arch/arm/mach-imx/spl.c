@@ -354,6 +354,7 @@ int dram_init_banksize(void)
  */
 void *spl_load_simple_fit_fix_load(void *fit)
 {
+#ifdef CONFIG_IMX_HAB
 	struct ivt *ivt;
 	unsigned long new;
 	unsigned long offset;
@@ -373,4 +374,7 @@ void *spl_load_simple_fit_fix_load(void *fit)
 	memcpy((void *)new, fit, size);
 
 	return (void *)new;
+#else
+	return fit;
+#endif
 }
