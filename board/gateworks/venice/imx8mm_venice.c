@@ -214,6 +214,7 @@ static void venice_fixup_memory(void *fdt, int size_gb) {
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
+	int off;
 #ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
 	/* fixup memory if we had to adjust it down */
 	if (size_gb >= 3)
@@ -222,6 +223,21 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 	/* set board model dt prop */
 	fdt_setprop_string(blob, 0, "board", gsc_get_model());
+
+	/* update temp thresholds */
+	off = fdt_path_offset(blob, "/thermal-zones/cpu-thermal/trips");
+	if (off >= 0) {
+		int minc, maxc, prop;
+
+		get_cpu_temp_grade(&minc, &maxc);
+		fdt_for_each_subnode(prop, blob, off) {
+			const char *type = fdt_getprop(blob, prop, "type", NULL);
+			if (type && (!strcmp("critical", type)))
+				fdt_setprop_u32(blob, prop, "temperature", maxc * 1000);
+			else if (type && (!strcmp("passive", type)))
+				fdt_setprop_u32(blob, prop, "temperature", (maxc - 10) * 1000);
+		}
+	}
 
 	return 0;
 }
