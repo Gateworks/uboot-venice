@@ -25,8 +25,10 @@ static int do_caam(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[
 		data_addr = (void *)simple_strtoul(argv[2], NULL, 16);
 		blob_addr = (void *)simple_strtoul(argv[3], NULL, 16);
 		size = simple_strtoul(argv[4], NULL, 10);
-		if (size <= 48)
+		if (size < 1) {
+			printf("bad size (%d), expecting at least 1 byte\n", size);
 			return CMD_RET_USAGE;
+		}
 
 		caam_open();
 		ret = caam_gen_blob((uintptr_t)data_addr, (uintptr_t)blob_addr, (uint32_t)size);
@@ -38,7 +40,7 @@ static int do_caam(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[
 
 		/* Print the generated DEK blob */
 		printf("DEK blob is available at 0x%0lx and equals:\n", (uintptr_t)blob_addr);
-		for (i = 0; i < size; i++)
+		for (i = 0; i < size+48; i++)
 			printf("%02X ", ((uint8_t *)blob_addr)[i]);
 		printf("\n\n");
 
@@ -54,8 +56,10 @@ static int do_caam(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[
 		blob_addr = (void *)simple_strtoul(argv[2], NULL, 16);
 		data_addr = (void *)simple_strtoul(argv[3], NULL, 16);
 		size      = simple_strtoul(argv[4], NULL, 10);
-		if (size <= 48)
+		if (size < 1) {
+			printf("bad size (%d), expecting at least 1 byte\n", size);
 			return CMD_RET_USAGE;
+		}
 
 		caam_open();
 		ret = caam_decap_blob((uintptr_t)(data_addr), (uintptr_t)(blob_addr), (uint32_t)size);
