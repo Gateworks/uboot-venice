@@ -45,6 +45,8 @@
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 1) \
 	func(MMC, mmc, 2) \
+	func(MMC, usb, 0) \
+	func(MMC, usb, 1) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
 #undef CONFIG_ISO_PARTITION
