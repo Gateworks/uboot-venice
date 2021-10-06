@@ -67,7 +67,7 @@
 		"setexpr blkcnt $filesize + 0x1ff && " \
 		"setexpr blkcnt $blkcnt / 0x200 && " \
 		"mmc dev $dev && " \
-		"mmc write $loadaddr 0x42 $blkcnt\0" \
+		"mmc write $loadaddr 0x40 $blkcnt\0" \
 	"boot_net=" \
 		"tftpboot $kernel_addr_r $image && " \
 		"booti $kernel_addr_r - $fdtcontroladdr\0" \
