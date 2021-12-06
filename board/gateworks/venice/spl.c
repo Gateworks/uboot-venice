@@ -100,6 +100,9 @@ static void spl_dram_init(int size)
 		size = 1;
 #endif
 #ifdef CONFIG_IMX8MN
+	case 1:
+		dram_timing = &dram_timing_1gb_single_die;
+		break;
 	case 2:
 		if (!strcmp(gsc_get_model(), "GW7902-SP466-A") ||
 		    !strcmp(gsc_get_model(), "GW7902-SP466-B")) {
