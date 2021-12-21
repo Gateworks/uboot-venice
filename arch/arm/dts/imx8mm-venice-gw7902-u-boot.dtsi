@@ -61,7 +61,7 @@
 
 	uart2en {
 		gpio-hog;
-		output-low;
+		output-high;
 		gpios = <8 GPIO_ACTIVE_HIGH>;
 		line-name = "uart2_en#";
 	};
