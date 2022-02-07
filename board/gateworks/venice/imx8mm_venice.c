@@ -19,16 +19,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* IMX8M integrated peripherals have a 32bit DMA thus can
- * not access over a 32bit boundary which limits DRAM size
- * to 3GiB (because DRAM starts at 1GiB)
- *
- * As a workaround until these drivers (fec/sdhc/usb) are fixed
- * we will clamp to 3GiB and will adjust the dt back to the full
- * DRAM size for Linux before booting
- */
-#define DRAM_32BIT_BOUNDARY_WORKAROUND
-
 int board_phys_sdram_size(phys_size_t *size)
 {
 	const fdt64_t *val;
@@ -44,11 +34,6 @@ int board_phys_sdram_size(phys_size_t *size)
 	if (len < sizeof(*val) * 2)
 		return -EINVAL;
 	*size = get_unaligned_be64(&val[1]);
-
-#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
-	if (*size >= 0xc0000000)
-		*size = 0xc0000000;
-#endif
 
 	return 0;
 }
@@ -186,56 +171,9 @@ int board_mmc_get_env_dev(int devno)
 	return devno;
 }
 
-#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
-/*
- * fdt_pack_reg - pack address and size array into the "reg"-suitable stream
- */
-static int fdt_pack_reg(const void *fdt, void *buf, u64 address, u64 size)
-{
-	int address_cells = fdt_address_cells(fdt, 0);
-	int size_cells = fdt_size_cells(fdt, 0);
-	char *p = buf;
-
-	if (address_cells == 2)
-		*(fdt64_t *)p = cpu_to_fdt64(address);
-	else
-		*(fdt32_t *)p = cpu_to_fdt32(address);
-	p += 4 * address_cells;
-
-	if (size_cells == 2)
-		*(fdt64_t *)p = cpu_to_fdt64(size);
-	else
-		*(fdt32_t *)p = cpu_to_fdt32(size);
-	p += 4 * size_cells;
-
-	return p - (char *)buf;
-}
-
-static void venice_fixup_memory(void *fdt, int size_gb) {
-	const void *prop;
-	int memory;
-	int len;
-	u8 buf[16];
-
-	memory = fdt_path_offset(fdt, "/memory");
-	prop = fdt_getprop(fdt, memory, "reg", &len);
-
-	if (prop && len >= 16) {
-		len = fdt_pack_reg(fdt, buf, CONFIG_SYS_SDRAM_BASE,
-				   (u64)size_gb * 0x40000000);
-		fdt_setprop(fdt, memory, "reg", buf, len);
-	}
-}
-#endif // ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
-
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int off;
-#ifdef DRAM_32BIT_BOUNDARY_WORKAROUND
-	/* fixup memory if we had to adjust it down */
-	if (size_gb >= 3)
-		venice_fixup_memory(blob, size_gb);
-#endif
 
 	/* set board model dt prop */
 	fdt_setprop_string(blob, 0, "board", gsc_get_model());
