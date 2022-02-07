@@ -120,7 +120,6 @@ static void spl_dram_init(int size)
 
 	printf("DRAM    : LPDDR4 %d GiB\n", size);
 	ddr_init(dram_timing);
-	gd->ram_size = size;
 }
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
