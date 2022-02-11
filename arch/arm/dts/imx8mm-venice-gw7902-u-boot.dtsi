@@ -109,6 +109,20 @@
 		line-name = "amp_gpio1";
 	};
 
+	ltrpwr {
+		gpio-hog;
+		output-low;
+		gpios = <16 GPIO_ACTIVE_HIGH>;
+		line-name = "lte_pwr#";
+	};
+
+	lterst {
+		gpio-hog;
+		output-low;
+		gpios = <17 GPIO_ACTIVE_HIGH>;
+		line-name = "lte_rst";
+	};
+
 	ampgpio4 {
 		gpio-hog;
 		input;
