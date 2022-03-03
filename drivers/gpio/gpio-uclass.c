@@ -280,6 +280,8 @@ static int gpio_hog_probe(struct udevice *dev)
 	struct gpio_hog_priv *priv = dev_get_priv(dev);
 	int ret;
 
+	if (plat->gpiod_flags == GPIOD_IS_OUT && plat->value)
+		plat->gpiod_flags |= GPIOD_IS_OUT_ACTIVE;
 	ret = gpio_dev_request_index(dev->parent, dev->name, "gpio-hog",
 				     plat->val[0], plat->gpiod_flags,
 				     plat->val[1], &priv->gpiod);
