@@ -334,7 +334,7 @@ int eeprom_init(int quiet)
 	if (!quiet)
 		eeprom_info(false);
 
-	return ((16 << som_info.sdram_size) / 1024);
+	return (16 << som_info.sdram_size);
 }
 
 void board_gsc_info(void)
