@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 
-obj-y += imx8mm_venice.o eeprom.o
+obj-y += venice.o eeprom.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
