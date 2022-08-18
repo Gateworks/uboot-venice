@@ -94,8 +94,8 @@
 	m2rst_hog {
 		gpio-hog;
 		gpios = <6 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "m2_rst#";
+		output-low;
+		line-name = "m2_rst";
 	};
 
 	m2_off_hog {
