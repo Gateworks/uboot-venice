@@ -376,3 +376,8 @@ const char *spl_board_loader_name(u32 boot_device)
 		return NULL;
 	}
 }
+
+void spl_board_init(void)
+{
+	arch_misc_init();
+}
