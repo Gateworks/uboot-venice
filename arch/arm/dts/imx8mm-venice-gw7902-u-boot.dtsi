@@ -96,6 +96,13 @@
 		line-name = "app_gpio1";
 	};
 
+	vdd4p0en {
+		gpio-hog;
+		output-low;
+		gpios = <22 GPIO_ACTIVE_HIGH>;
+		line-name = "vdd_4p0_en";
+	};
+
 	uart1rs485 {
 		gpio-hog;
 		output-low;
