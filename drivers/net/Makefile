@@ -52,6 +52,7 @@ obj-$(CONFIG_MDIO_MUX_SANDBOX) += mdio_mux_sandbox.o
 obj-$(CONFIG_MPC8XX_FEC) += mpc8xx_fec.o
 obj-$(CONFIG_MT7620_ETH) += mt7620-eth.o
 obj-$(CONFIG_MT7628_ETH) += mt7628-eth.o
+obj-$(CONFIG_MV88E6XXX) += mv88e6xxx.o
 obj-$(CONFIG_MVGBE) += mvgbe.o
 obj-$(CONFIG_MVMDIO) += mvmdio.o
 obj-$(CONFIG_MVNETA) += mvneta.o
