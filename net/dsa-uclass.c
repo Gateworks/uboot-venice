@@ -458,6 +458,7 @@ static int dsa_pre_probe(struct udevice *dev)
 {
 	struct dsa_pdata *pdata = dev_get_uclass_plat(dev);
 	struct dsa_priv *priv = dev_get_uclass_priv(dev);
+	int err;
 
 	priv->num_ports = pdata->num_ports;
 	priv->cpu_port = pdata->cpu_port;
@@ -467,8 +468,28 @@ static int dsa_pre_probe(struct udevice *dev)
 		return -ENODEV;
 	}
 
-	uclass_find_device_by_ofnode(UCLASS_ETH, pdata->master_node,
-				     &priv->master_dev);
+	err = uclass_get_device_by_ofnode(UCLASS_ETH, pdata->master_node,
+					  &priv->master_dev);
+	if (err)
+		return err;
+
+	return 0;
+}
+
+static int dsa_post_probe(struct udevice *dev)
+{
+	struct dsa_priv *priv = dev_get_uclass_priv(dev);
+	struct dsa_ops *ops = dsa_get_ops(dev);
+	int err;
+
+	/* Simulate a probing event for the CPU port */
+	if (ops->port_probe) {
+		err = ops->port_probe(dev, priv->cpu_port,
+				      priv->cpu_port_fixed_phy);
+		if (err)
+			return err;
+	}
+
 	return 0;
 }
 
@@ -477,6 +498,7 @@ UCLASS_DRIVER(dsa) = {
 	.name = "dsa",
 	.post_bind = dsa_post_bind,
 	.pre_probe = dsa_pre_probe,
+	.post_probe = dsa_post_probe,
 	.per_device_auto = sizeof(struct dsa_priv),
 	.per_device_plat_auto = sizeof(struct dsa_pdata),
 	.per_child_plat_auto = sizeof(struct dsa_port_pdata),
