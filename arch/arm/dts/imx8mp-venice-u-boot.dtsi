@@ -73,6 +73,14 @@
 	u-boot,dm-spl;
 };
 
+&i2c3 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_i2c3 {
+	u-boot,dm-spl;
+};
+
 &wdog1 {
 	u-boot,dm-spl;
 };

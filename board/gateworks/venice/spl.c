@@ -74,6 +74,9 @@ static void spl_dram_init(int size)
 	case 1024:
 		dram_timing = &dram_timing_1gb_single_die;
 		break;
+	case 2048:
+		dram_timing = &dram_timing_4gb_dual_die_1200mhz_16b;
+		break;
 	case 4096:
 		dram_timing = &dram_timing_4gb_dual_die;
 		break;
@@ -147,9 +150,9 @@ static int power_init_board(void)
 	}
 
 	else if (!strncmp(model, "GW74", 4)) {
-		ret = uclass_get_device_by_seq(UCLASS_I2C, 0, &bus);
+		ret = uclass_get_device_by_seq(UCLASS_I2C, 2, &bus);
 		if (ret) {
-			printf("PMIC    : failed I2C1 probe: %d\n", ret);
+			printf("PMIC    : failed I2C3 probe: %d\n", ret);
 			return ret;
 		}
 		ret = dm_i2c_probe(bus, 0x25, 0, &dev);
