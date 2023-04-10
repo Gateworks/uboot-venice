@@ -71,6 +71,9 @@ static void spl_dram_init(int size)
 		dram_timing = &dram_timing_2gb_dual_die;
 		size = 2048;
 #elif CONFIG_IMX8MP
+	case 1024:
+		dram_timing = &dram_timing_1gb_single_die;
+		break;
 	case 4096:
 		dram_timing = &dram_timing_4gb_dual_die;
 		break;
