@@ -80,8 +80,7 @@
 		"gzwrite mmc $dev $loadaddr $filesize 100000 1000000\0" \
 	"update_all=" \
 		"tftpboot $loadaddr $image && " \
-		"gzwrite mmc $dev $loadaddr $filesize\0" \
-	"erase_env=mmc dev $dev; mmc erase 0x7f08 0x40\0"
+		"gzwrite mmc $dev $loadaddr $filesize\0"
 
 #define CONFIG_SYS_INIT_RAM_ADDR        0x40000000
 #define CONFIG_SYS_INIT_RAM_SIZE        SZ_2M
