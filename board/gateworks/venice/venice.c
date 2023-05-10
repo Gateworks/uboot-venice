@@ -186,6 +186,7 @@ int board_late_init(void)
 		bootdev = 2;
 		break;
 	default:
+		bootdev = 2; /* assume SDHC3 (eMMC) if booting over SDP */
 		break;
 	}
 	if (bootdev != -1)
