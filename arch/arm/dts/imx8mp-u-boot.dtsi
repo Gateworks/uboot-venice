@@ -44,6 +44,9 @@
 
 &aips3 {
 	u-boot,dm-spl;
+	spba-bus@30800000 {
+		u-boot,dm-spl;
+	};
 };
 
 &iomuxc {
