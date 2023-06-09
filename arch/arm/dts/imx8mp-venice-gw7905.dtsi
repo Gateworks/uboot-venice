@@ -94,7 +94,7 @@
 		"", "", "", "",
 		"", "", "", "",
 		"", "", "", "",
-		"som_3p3en", "", "pci_usbsel", "",
+		"", "", "pci_usb_sel", "",
 		"pci_wdis#", "", "", "";
 };
 
@@ -108,11 +108,6 @@
 		compatible = "atmel,24c32";
 		reg = <0x52>;
 		pagesize = <32>;
-	};
-
-	usbpd@28 {
-		compatible = "st,st4500";
-		reg = <0x28>;
 	};
 };
 
@@ -172,16 +167,15 @@
  *  P2 - USB2 test connector
  *  P3 - miniPCIe full card
  *  P4 - miniPCIe half card
- *  GPIO4_IO12 is USBHUB_RST# which has an ext p/u
  */
-&usb3_1 {
-	fsl,permanently-attached;
-	fsl,disable-port-power-control;
+&usb3_phy1 {
+	vbus-supply = <&reg_usb2_vbus>;
 	status = "okay";
 };
 
-&usb3_phy1 {
-	vbus-supply = <&reg_usb2_vbus>;
+&usb3_1 {
+	fsl,permanently-attached;
+	fsl,disable-port-power-control;
 	status = "okay";
 };
 
@@ -219,8 +213,8 @@
 
 	pinctrl_gpio_leds: gpioledgrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI2_RXC__GPIO4_IO22	0x18	/* LEDG */
-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27	0x18	/* LEDR */
+			MX8MP_IOMUXC_SAI2_RXC__GPIO4_IO22	0x6	/* LEDG */
+			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27	0x6	/* LEDR */
 		>;
 	};
 
@@ -240,19 +234,19 @@
 
 	pinctrl_pcie0: pciegrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI3_RXC__GPIO4_IO29	0x110
+			MX8MP_IOMUXC_SAI3_RXC__GPIO4_IO29	0x106
 		>;
 	};
 
 	pinctrl_pps: ppsgrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI2_RXFS__GPIO4_IO21	0x41
+			MX8MP_IOMUXC_SAI2_RXFS__GPIO4_IO21	0x106
 		>;
 	};
 
 	pinctrl_reg_usb2_en: regusb2grp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI1_TXD0__GPIO4_IO12	0x40000146 /* USBHUB_RST# (ext p/u) */
+			MX8MP_IOMUXC_SAI1_TXD0__GPIO4_IO12	0x6 /* USBHUB_RST# (ext p/u) */
 		>;
 	};
 
@@ -264,9 +258,9 @@
 
 	pinctrl_spi2: spi2grp {
 		fsl,pins = <
-			MX8MP_IOMUXC_ECSPI2_SCLK__ECSPI2_SCLK	0x82
-			MX8MP_IOMUXC_ECSPI2_MOSI__ECSPI2_MOSI	0x82
-			MX8MP_IOMUXC_ECSPI2_MISO__ECSPI2_MISO	0x82
+			MX8MP_IOMUXC_ECSPI2_SCLK__ECSPI2_SCLK	0x140
+			MX8MP_IOMUXC_ECSPI2_MOSI__ECSPI2_MOSI	0x140
+			MX8MP_IOMUXC_ECSPI2_MISO__ECSPI2_MISO	0x140
 			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13	0x140
 		>;
 	};
@@ -275,42 +269,6 @@
 		fsl,pins = <
 			MX8MP_IOMUXC_UART1_RXD__UART1_DCE_RX	0x140
 			MX8MP_IOMUXC_UART1_TXD__UART1_DCE_TX	0x140
-		>;
-	};
-
-	pinctrl_usdhc1: usdhc1grp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SD1_CLK__USDHC1_CLK	0x190
-			MX8MP_IOMUXC_SD1_CMD__USDHC1_CMD	0x1d0
-			MX8MP_IOMUXC_SD1_DATA0__USDHC1_DATA0	0x1d0
-			MX8MP_IOMUXC_SD1_DATA1__USDHC1_DATA1	0x1d0
-			MX8MP_IOMUXC_SD1_DATA2__USDHC1_DATA2	0x1d0
-			MX8MP_IOMUXC_SD1_DATA3__USDHC1_DATA3	0x1d0
-			MX8MP_IOMUXC_GPIO1_IO03__USDHC1_VSELECT	0xc1
-		>;
-	};
-
-	pinctrl_usdhc1_100mhz: usdhc1-100mhzgrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SD1_CLK__USDHC1_CLK	0x194
-			MX8MP_IOMUXC_SD1_CMD__USDHC1_CMD	0x1d4
-			MX8MP_IOMUXC_SD1_DATA0__USDHC1_DATA0	0x1d4
-			MX8MP_IOMUXC_SD1_DATA1__USDHC1_DATA1	0x1d4
-			MX8MP_IOMUXC_SD1_DATA2__USDHC1_DATA2	0x1d4
-			MX8MP_IOMUXC_SD1_DATA3__USDHC1_DATA3	0x1d4
-			MX8MP_IOMUXC_GPIO1_IO03__USDHC1_VSELECT	0xc1
-		>;
-	};
-
-	pinctrl_usdhc1_200mhz: usdhc1-200mhzgrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SD1_CLK__USDHC1_CLK	0x196
-			MX8MP_IOMUXC_SD1_CMD__USDHC1_CMD	0x1d6
-			MX8MP_IOMUXC_SD1_DATA0__USDHC1_DATA0	0x1d6
-			MX8MP_IOMUXC_SD1_DATA1__USDHC1_DATA1	0x1d6
-			MX8MP_IOMUXC_SD1_DATA2__USDHC1_DATA2	0x1d6
-			MX8MP_IOMUXC_SD1_DATA3__USDHC1_DATA3	0x1d6
-			MX8MP_IOMUXC_GPIO1_IO03__USDHC1_VSELECT	0xc1
 		>;
 	};
 
@@ -352,7 +310,7 @@
 
 	pinctrl_usdhc2_gpio: usdhc2gpiogrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12		0x80
+			MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12		0x1c4
 		>;
 	};
 };

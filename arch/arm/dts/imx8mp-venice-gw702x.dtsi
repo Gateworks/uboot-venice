@@ -93,13 +93,11 @@
 
 		ethphy0: ethernet-phy@0 {
 			compatible = "ethernet-phy-ieee802.3-c22";
-			reg = <0x0>;
-#if 0
 			pinctrl-0 = <&pinctrl_ethphy0>;
 			pinctrl-names = "default";
+			reg = <0x0>;
 			interrupt-parent = <&gpio3>;
 			interrupts = <16 IRQ_TYPE_EDGE_FALLING>;
-#endif
 			ti,rx-internal-delay = <DP83867_RGMIIDCTL_2_00_NS>;
 			ti,tx-internal-delay = <DP83867_RGMIIDCTL_2_00_NS>;
 			tx-fifo-depth = <DP83867_PHYCR_FIFO_DEPTH_4_B_NIB>;
@@ -140,7 +138,7 @@
 			};
 
 			channel@8 {
-				gw,mode = <1>;
+				gw,mode = <3>;
 				reg = <0x08>;
 				label = "vdd_bat";
 			};
@@ -443,17 +441,15 @@
 			MX8MP_IOMUXC_ENET_TD3__ENET_QOS_RGMII_TD3		0x16
 			MX8MP_IOMUXC_ENET_TX_CTL__ENET_QOS_RGMII_TX_CTL		0x16
 			MX8MP_IOMUXC_ENET_TXC__CCM_ENET_QOS_CLOCK_GENERATE_TX_CLK	0x16
+		>;
+	};
+
+	pinctrl_ethphy0: ethphy0grp {
+		fsl,pins = <
 			MX8MP_IOMUXC_NAND_DQS__GPIO3_IO14	0x140 /* RST# */
 			MX8MP_IOMUXC_NAND_READY_B__GPIO3_IO16	0x150 /* IRQ# */
 		>;
 	};
-
-/*
-	pinctrl_ethphy0: ethphy0grp {
-		fsl,pins = <
-		>;
-	};
-*/
 
 	pinctrl_gsc: gscgrp {
 		fsl,pins = <
