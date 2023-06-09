@@ -103,7 +103,7 @@
 };
 
 &gpio3 {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 
 	m2_rst {
 		gpio-hog;
@@ -114,7 +114,7 @@
 };
 
 &gpio4 {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 
 	m2_off {
 		gpio-hog;
