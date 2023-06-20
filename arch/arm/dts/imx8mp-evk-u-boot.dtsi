@@ -11,12 +11,6 @@
 		wdt = <&wdog1>;
 		u-boot,dm-spl;
 	};
-	firmware {
-		optee {
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
-	};
 };
 
 &reg_usdhc2_vmmc {
