@@ -14,6 +14,13 @@ if OPTEE || SANDBOX
 
 menu "OP-TEE options"
 
+config OPTEE_LOAD_ADDRESS
+	hex "Load address of OPTEE"
+	help
+	  Defines the load and entry address used by U-Boot FIT images
+	  for tee.bin. This address must match the link address that
+	  tee.bin was built with.
+
 config OPTEE_TA_AVB
 	bool "Support AVB TA"
 	default y
