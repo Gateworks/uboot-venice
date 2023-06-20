@@ -179,6 +179,21 @@
 						type = "atf-bl31";
 					};
 				};
+
+#ifdef CONFIG_OPTEE_LOAD_ADDRESS
+				tee {
+					description = "TEE firmware";
+					type = "firmware";
+					arch = "arm64";
+					compression = "none";
+					load = <CONFIG_OPTEE_LOAD_ADDRESS>;
+					entry = <CONFIG_OPTEE_LOAD_ADDRESS>;
+
+					tee_blob: blob-ext {
+						filename = "tee.bin";
+					};
+				};
+#endif
 #endif
 
 				binman_fip: fip {
@@ -209,7 +224,11 @@
 					fdt = "fdt-SEQ";
 					firmware = "uboot";
 #ifndef CONFIG_ARMV8_PSCI
+#ifdef CONFIG_OPTEE_LOAD_ADDRESS
+					loadables = "atf", "tee";
+#else
 					loadables = "atf";
+#endif
 #endif
 				};
 			};
