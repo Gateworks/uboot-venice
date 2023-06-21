@@ -19,6 +19,12 @@
 #endif
 };
 
+#ifdef FSL_CAAM
+&crypto {
+	bootph-pre-ram;
+};
+#endif
+
 &soc {
 	u-boot,dm-pre-reloc;
 	u-boot,dm-spl;
@@ -61,6 +67,20 @@
 &iomuxc {
 	u-boot,dm-spl;
 };
+
+#ifdef FSL_CAAM
+&sec_jr0 {
+	bootph-pre-ram;
+};
+
+&sec_jr1 {
+	bootph-pre-ram;
+};
+
+&sec_jr2 {
+	bootph-pre-ram;
+};
+#endif
 
 &binman {
 	 u-boot-spl-ddr {
