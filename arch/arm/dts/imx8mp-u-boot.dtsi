@@ -19,9 +19,9 @@
 #endif
 };
 
-#ifdef FSL_CAAM
+#ifdef CONFIG_FSL_CAAM
 &crypto {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 };
 #endif
 
@@ -68,17 +68,17 @@
 	u-boot,dm-spl;
 };
 
-#ifdef FSL_CAAM
+#ifdef CONFIG_FSL_CAAM
 &sec_jr0 {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 };
 
 &sec_jr1 {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 };
 
 &sec_jr2 {
-	bootph-pre-ram;
+	u-boot,dm-spl;
 };
 #endif
 
