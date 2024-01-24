@@ -217,6 +217,10 @@ const char *eeprom_get_dtb_name(int level, char *buf, int sz)
 		int rev_base_pcb = tolower(get_pcb_rev(base_info.model));
 		int rev_base_bom = get_bom_rev(base_info.model);
 
+		/* GW7905 baseboard was renamed to GW7500 - make GW7950-A boards backwards compat */
+		if (!strncmp(base_info.model, "GW7905-A", 8))
+			base = 75;
+
 		snprintf(buf, sz, "%s%2dxx-%dx", pre, base, som);
 		/* GW79xx baseboards have no build options */
 		if (base == 79) {
