@@ -237,14 +237,14 @@ static int tpm_tis_spi_probe(struct udevice *dev)
 			/* legacy reset */
 			ret = gpio_request_by_name(dev, "gpio-reset", 0,
 						   &reset_gpio, GPIOD_IS_OUT);
-			if (ret) {
-				log(LOGC_NONE, LOGL_NOTICE,
-				    "%s: missing reset GPIO\n", __func__);
+			if (ret)
 				goto init;
-			}
 			log(LOGC_NONE, LOGL_NOTICE,
 			    "%s: gpio-reset is deprecated\n", __func__);
 		}
+		log(LOGC_NONE, LOGL_NOTICE,
+		    "%s: performing 1ms reset on %s:%d\n", dev->name,
+		    reset_gpio.dev->name, reset_gpio.offset);
 		dm_gpio_set_value(&reset_gpio, 1);
 		mdelay(1);
 		dm_gpio_set_value(&reset_gpio, 0);
