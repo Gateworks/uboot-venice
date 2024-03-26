@@ -690,4 +690,21 @@ u32 tpm2_report_state(struct udevice *dev, uint vendor_cmd, uint vendor_subcmd,
 u32 tpm2_enable_nvcommits(struct udevice *dev, uint vendor_cmd,
 			  uint vendor_subcmd);
 
+/**
+ * tpm2_algo_len() - Return an algo value and length given a algorithm name
+ *
+ * @name: algorithm name
+ * @rwlen: pointer to integer to populate with algorithm length if non-null
+ * Return: algorithm value
+ */
+int tpm2_algo_len(const char *name, int *rwlen);
+
+/**
+ * tpm2_algo_len() - Return an algoithm name string
+ *
+ * @algo: algorithm value
+ * Return: algorithm string
+ */
+const char *tpm2_algo_name(int algo);
+
 #endif /* __TPM_V2_H */

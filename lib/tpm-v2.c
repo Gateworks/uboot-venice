@@ -725,3 +725,49 @@ u32 tpm2_enable_nvcommits(struct udevice *dev, uint vendor_cmd,
 
 	return 0;
 }
+
+int tpm2_algo_len(const char *name, int *rwlen)
+{
+	int algo = -EINVAL;
+	int len = 0;
+
+	if (!strcasecmp("sha1", name)) {
+		algo = TPM2_ALG_SHA1;
+		len = TPM2_SHA1_DIGEST_SIZE;
+	} else if (!strcasecmp("sha256", name)) {
+		algo = TPM2_ALG_SHA256;
+		len = TPM2_SHA256_DIGEST_SIZE;
+	} else if (!strcasecmp("sha384", name)) {
+		algo = TPM2_ALG_SHA384;
+		len = TPM2_SHA384_DIGEST_SIZE;
+	} else if (!strcasecmp("sha512", name)) {
+		algo = TPM2_ALG_SHA512;
+		len = TPM2_SHA512_DIGEST_SIZE;
+	} else if (!strcasecmp("sm3_256", name)) {
+		algo = TPM2_ALG_SM3_256;
+		len = TPM2_SM3_256_DIGEST_SIZE;
+	}
+
+	if (*rwlen)
+		*rwlen = len;
+
+	return algo;
+}
+
+const char *tpm2_algo_name(int algo)
+{
+	switch (algo) {
+	case TPM2_ALG_SHA1:
+		return "sha1";
+	case TPM2_ALG_SHA256:
+		return "sha256";
+	case TPM2_ALG_SHA384:
+		return "sha384";
+	case TPM2_ALG_SHA512:
+		return "sha512";
+	case TPM2_ALG_SM3_256:
+		return "sm3_256";
+	}
+
+	return "";
+}
