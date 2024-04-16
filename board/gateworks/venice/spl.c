@@ -74,6 +74,9 @@ static void spl_dram_init(int size)
 	case 1024:
 		dram_timing = &dram_timing_1gb_single_die;
 		break;
+	case 2048:
+		dram_timing = &dram_timing_4gb_dual_die_1200mhz_16b;
+		break;
 	case 4096:
 		dram_timing = &dram_timing_4gb_dual_die;
 		break;
