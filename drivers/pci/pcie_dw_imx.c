@@ -45,6 +45,10 @@
 #define IMX8M_GPR_PCIE_CLK_REQ_OVERRIDE_EN	BIT(10)
 #define IMX8M_GPR_PCIE_CLK_REQ_OVERRIDE		BIT(11)
 
+struct pcie_chip_info {
+	const char *gpr;
+};
+
 struct pcie_dw_imx {
 	/* Must be first member of the struct */
 	struct pcie_dw			dw;
@@ -54,6 +58,15 @@ struct pcie_dw_imx {
 	struct reset_ctl		apps_reset;
 	struct phy			phy;
 	struct udevice			*vpcie;
+	struct pcie_chip_info		*info;
+};
+
+static const struct pcie_chip_info imx8mm_chip_info = {
+	.gpr = "fsl,imx8mm-iomuxc-gpr",
+};
+
+static const struct pcie_chip_info imx8mp_chip_info = {
+	.gpr = "fsl,imx8mp-iomuxc-gpr",
 };
 
 static void pcie_dw_configure(struct pcie_dw_imx *priv, u32 cap_speed)
@@ -246,6 +259,8 @@ static int pcie_dw_imx_of_to_plat(struct udevice *dev)
 	ofnode gpr;
 	int ret;
 
+	priv->info = (void *)dev_get_driver_data(dev);
+
 	/* Get the controller base address */
 	priv->dw.dbi_base = (void *)dev_read_addr_name(dev, "dbi");
 	if ((fdt_addr_t)priv->dw.dbi_base == FDT_ADDR_T_NONE) {
@@ -287,7 +302,7 @@ static int pcie_dw_imx_of_to_plat(struct udevice *dev)
 		goto err_phy;
 	}
 
-	gpr = ofnode_by_compatible(ofnode_null(), "fsl,imx8mp-iomuxc-gpr");
+	gpr = ofnode_by_compatible(ofnode_null(), priv->info->gpr);
 	if (ofnode_equal(gpr, ofnode_null())) {
 		dev_err(dev, "unable to find GPR node\n");
 		ret = -ENODEV;
@@ -322,7 +337,8 @@ static const struct dm_pci_ops pcie_dw_imx_ops = {
 };
 
 static const struct udevice_id pcie_dw_imx_ids[] = {
-	{ .compatible = "fsl,imx8mp-pcie" },
+	{ .compatible = "fsl,imx8mm-pcie", .data = (ulong)&imx8mm_chip_info, },
+	{ .compatible = "fsl,imx8mp-pcie", .data = (ulong)&imx8mp_chip_info, },
 	{ }
 };
 
