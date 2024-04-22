@@ -383,9 +383,25 @@ unsigned long board_spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long 
 
 const char *spl_board_loader_name(u32 boot_device)
 {
+	struct mmc *mmc;
+	int part;
+
 	switch (boot_device) {
 	/* SDHC2 */
 	case BOOT_DEVICE_MMC1:
+		mmc_init_device(0);
+		mmc = find_mmc_device(0);
+		mmc_init(mmc);
+		part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
+		switch (part) {
+		case 1:
+			return "eMMC boot0";
+		case 2:
+			return "eMMC boot1";
+		case 0:
+		case 7:
+			return "eMMC user";
+		}
 		return "eMMC";
 	/* SDHC3 */
 	case BOOT_DEVICE_MMC2:
