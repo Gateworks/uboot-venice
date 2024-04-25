@@ -63,7 +63,7 @@ config SYS_FSL_SEC_LE
 if FSL_CAAM
 
 config FSL_CAAM_RNG
-	bool "Enable Random Number Generator support"
+	bool "Enable CAAM Random Number Generator support"
 	depends on DM_RNG
 	default y
 	help
@@ -82,7 +82,7 @@ config SPL_FSL_CAAM_RNG
 endif
 
 config FSL_DCP_RNG
-	bool "Enable Random Number Generator support"
+	bool "Enable DCP Random Number Generator support"
 	depends on DM_RNG
 	default n
 	help
