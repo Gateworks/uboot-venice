@@ -14,6 +14,18 @@
 #include <part.h>
 #include <sparse_format.h>
 #include <image-sparse.h>
+#include <linux/ctype.h>
+
+static const char *mmc_partnames[] = {
+	"user",
+	"boot0",
+	"boot1",
+	"gp1",
+	"gp2",
+	"gp3",
+	"gp4",
+	"user",
+};
 
 static int curr_device = -1;
 
@@ -918,8 +930,8 @@ static int mmc_partconf_print(struct mmc *mmc, const char *varname)
 
 	printf("EXT_CSD[179], PARTITION_CONFIG:\n"
 		"BOOT_ACK: 0x%x\n"
-		"BOOT_PARTITION_ENABLE: 0x%x\n"
-		"PARTITION_ACCESS: 0x%x\n", ack, part, access);
+		"BOOT_PARTITION_ENABLE: 0x%x (%s)\n"
+		"PARTITION_ACCESS: 0x%x\n", ack, part, mmc_partnames[part], access);
 
 	return CMD_RET_SUCCESS;
 }
@@ -949,7 +961,14 @@ static int do_mmc_partconf(struct cmd_tbl *cmdtp, int flag,
 		return mmc_partconf_print(mmc, argc == 3 ? argv[2] : NULL);
 
 	ack = dectoul(argv[2], NULL);
-	part_num = dectoul(argv[3], NULL);
+	if (!isdigit(*argv[3])) {
+		for (part_num = 0; part_num < ARRAY_SIZE(mmc_partnames); part_num++) {
+			if (!strcmp(argv[3], mmc_partnames[part_num]))
+				break;
+		}
+	} else {
+		part_num = dectoul(argv[3], NULL);
+	}
 	access = dectoul(argv[4], NULL);
 
 	/* acknowledge to be sent during boot operation */
