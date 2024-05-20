@@ -8,10 +8,12 @@
 
 #include <common.h>
 #include <abuf.h>
+#include <dm.h>
 #include <env.h>
 #include <log.h>
 #include <mapmem.h>
 #include <net.h>
+#include <rng.h>
 #include <stdio_dev.h>
 #include <dm/ofnode.h>
 #include <linux/ctype.h>
@@ -300,6 +302,21 @@ int fdt_chosen(void *fdt)
 	nodeoffset = fdt_find_or_add_subnode(fdt, 0, "chosen");
 	if (nodeoffset < 0)
 		return nodeoffset;
+
+	if (IS_ENABLED(CONFIG_DM_RNG)) {
+		struct udevice *dev;
+		u64 data;
+
+		err = uclass_get_device(UCLASS_RNG, 0, &dev);
+		if (!err)
+			err = dm_rng_read(dev, &data, sizeof(data));
+		if (!err)
+			err = fdt_setprop(fdt, nodeoffset, "kaslr-seed", &data, sizeof(data));
+		if (err < 0) {
+			printf("WARNING: could not set kaslr-seed %s.\n", fdt_strerror(err));
+			return err;
+		}
+	}
 
 	if (IS_ENABLED(CONFIG_BOARD_RNG_SEED) && !board_rng_seed(&buf)) {
 		err = fdt_setprop(fdt, nodeoffset, "rng-seed",
