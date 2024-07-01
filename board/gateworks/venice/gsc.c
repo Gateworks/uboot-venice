@@ -594,6 +594,11 @@ int gsc_init(int quiet)
 	if (ret)
 		hang();
 
+	if (!strncmp(venice_model, "GW7901-SP486", 12) &&
+		strcmp(venice_model, "GW7901-SP486-C")) {
+		return 2;
+	}
+
 	return ((16 << som_info.sdram_size) / 1024);
 }
 
