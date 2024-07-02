@@ -79,9 +79,32 @@ void spl_perform_fixups(struct spl_image_info *spl_image)
 	venice_fixup_memory(spl_image->fdt_addr, gd->ram_size);
 }
 
+static void apply_cfg_patch(struct dram_cfg_param *cfg, int cfg_sz,
+			    struct dram_cfg_param *patch, int patch_sz)
+{
+	int i, j;
+
+	for (i = 0; i < cfg_sz; i++)
+		for (j = 0; j < patch_sz; j++)
+			if (cfg[i].reg == patch[j].reg)
+				cfg[i].val = patch[j].val;
+}
+
+static struct dram_cfg_param ddr_ddrc_cfg_alt_patch[] = {
+	{ 0x3d400020, 0x203},
+	{ 0x3d402020, 0x1},
+	{ 0x3d403020, 0x1}
+};
+
+static struct dram_cfg_param ddr_ddrphy_cfg_alt_patch[] = {
+	{ 0x120a3, 0x4 },
+	{ 0x120a5, 0x2 },
+};
+
 static void spl_dram_init(int size)
 {
 	struct dram_timing_info *dram_timing;
+	const char *model = gsc_get_model();
 
 	switch (size) {
 #ifdef CONFIG_IMX8MM
@@ -101,8 +124,8 @@ static void spl_dram_init(int size)
 #endif
 #ifdef CONFIG_IMX8MN
 	case 2:
-		if (!strcmp(gsc_get_model(), "GW7902-SP466-A") ||
-		    !strcmp(gsc_get_model(), "GW7902-SP466-B")) {
+		if (!strcmp(model, "GW7902-SP466-A") ||
+		    !strcmp(model, "GW7902-SP466-B")) {
 			dram_timing = &dram_timing_2gb_dual_die;
 		} else {
 			dram_timing = &dram_timing_2gb_single_die;
@@ -113,6 +136,19 @@ static void spl_dram_init(int size)
 		dram_timing = &dram_timing_2gb_dual_die;
 		size = 2;
 #endif
+	}
+
+	/* apply ddrc/phy register changes for alternate dram bus layout */
+	if (!strncmp(model, "GW7902", 6) ||
+	    !strncmp(model, "GW7903", 6) ||
+	    !strncmp(model, "GW7904", 6)) {
+		apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
+				ddr_ddrc_cfg_alt_patch,
+				ARRAY_SIZE(ddr_ddrc_cfg_alt_patch));
+
+		apply_cfg_patch(dram_timing->ddrphy_cfg, dram_timing->ddrphy_cfg_num,
+				ddr_ddrphy_cfg_alt_patch,
+				ARRAY_SIZE(ddr_ddrphy_cfg_alt_patch));
 	}
 
 	printf("DRAM    : LPDDR4 %d GiB\n", size);
