@@ -28,7 +28,29 @@
 
 #define PCIE_RSTN IMX_GPIO_NR(4, 6)
 
-static void spl_dram_init(int size)
+static void apply_cfg_patch(struct dram_cfg_param *cfg, int cfg_sz,
+			    struct dram_cfg_param *patch, int patch_sz)
+{
+	int i, j;
+
+	for (i = 0; i < cfg_sz; i++)
+		for (j = 0; j < patch_sz; j++)
+			if (cfg[i].reg == patch[j].reg)
+				cfg[i].val = patch[j].val;
+}
+
+static struct dram_cfg_param ddr_ddrc_cfg_alt_patch[] = {
+	{ 0x3d400020, 0x203},
+	{ 0x3d402020, 0x1},
+	{ 0x3d403020, 0x1}
+};
+
+static struct dram_cfg_param ddr_ddrphy_cfg_alt_patch[] = {
+	{ 0x120a3, 0x4 },
+	{ 0x120a5, 0x2 },
+};
+
+static void spl_dram_init(const char *model, int size)
 {
 	struct dram_timing_info *dram_timing;
 
@@ -56,8 +78,8 @@ static void spl_dram_init(int size)
 		dram_timing = &dram_timing_1gb_single_die;
 		break;
 	case 2048:
-		if (!strcmp(eeprom_get_model(), "GW7902-SP466-A") ||
-		    !strcmp(eeprom_get_model(), "GW7902-SP466-B")) {
+		if (!strcmp(model, "GW7902-SP466-A") ||
+		    !strcmp(model, "GW7902-SP466-B")) {
 			dram_timing = &dram_timing_2gb_dual_die;
 		} else {
 			dram_timing = &dram_timing_2gb_single_die;
@@ -75,6 +97,20 @@ static void spl_dram_init(int size)
 		printf("%d GiB\n", size / 1024);
 	else
 		printf("%d MiB\n", size);
+
+	/* apply ddrc/phy register changes for alternate dram bus layout */
+	if (!strncmp(model, "GW7902", 6) ||
+	    !strncmp(model, "GW7903", 6) ||
+	    !strncmp(model, "GW7904", 6)) {
+		apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
+				ddr_ddrc_cfg_alt_patch,
+				ARRAY_SIZE(ddr_ddrc_cfg_alt_patch));
+
+		apply_cfg_patch(dram_timing->ddrphy_cfg, dram_timing->ddrphy_cfg_num,
+				ddr_ddrphy_cfg_alt_patch,
+				ARRAY_SIZE(ddr_ddrphy_cfg_alt_patch));
+	}
+
 	ddr_init(dram_timing);
 }
 
@@ -138,9 +174,8 @@ static int dm_i2c_clrsetbits(struct udevice *dev, uint reg, uint clr, uint set)
 	return dm_i2c_write(dev, reg, &val, 1);
 }
 
-static int power_init_board(void)
+static int power_init_board(const char *model)
 {
-	const char *model = eeprom_get_model();
 	struct udevice *bus;
 	struct udevice *dev;
 	int ret;
@@ -214,6 +249,7 @@ static int power_init_board(void)
 void board_init_f(ulong dummy)
 {
 	struct udevice *dev;
+	const char *model;
 	int ret;
 	int dram_sz;
 
@@ -266,12 +302,13 @@ void board_init_f(ulong dummy)
 		mdelay(1);
 	}
 	dram_sz = venice_eeprom_init(0);
+	model = eeprom_get_model();
 
 	/* PMIC */
-	power_init_board();
+	power_init_board(model);
 
 	/* DDR initialization */
-	spl_dram_init(dram_sz);
+	spl_dram_init(model, dram_sz);
 
 	board_init_r(NULL, 0);
 }
