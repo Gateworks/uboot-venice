@@ -94,9 +94,12 @@ static void spl_dram_init(const char *model, int size)
 
 	printf("DRAM    : LPDDR4 ");
 	if (size > 512)
-		printf("%d GiB\n", size / 1024);
+		printf("%d GiB", size / 1024);
 	else
-		printf("%d MiB\n", size);
+		printf("%d MiB", size);
+	printf(" %dMT/s %dMHz\n",
+	       dram_timing->fsp_msg[0].drate,
+	       dram_timing->fsp_msg[0].drate / 2);
 
 	/* apply ddrc/phy register changes for alternate dram bus layout */
 	if (!strncmp(model, "GW7902", 6) ||
