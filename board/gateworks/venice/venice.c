@@ -14,6 +14,7 @@
 #include <asm/mach-imx/boot_mode.h>
 
 #include "eeprom.h"
+#include "../fsa.h"
 
 int board_phys_sdram_size(phys_size_t *size)
 {
@@ -74,6 +75,9 @@ int board_phy_config(struct phy_device *phydev)
 int board_init(void)
 {
 	venice_eeprom_init(1);
+
+	/* detect and configure FSA adapters */
+	fsa_init();
 
 	return 0;
 }
@@ -220,6 +224,9 @@ int ft_board_setup(void *fdt, struct bd_info *bd)
 
 	/* set board model dt prop */
 	fdt_setprop_string(fdt, 0, "board", eeprom_get_model());
+
+	/* fixups for FSA adapters */
+	fsa_ft_fixup(fdt);
 
 	if (!strncmp(base_model, "GW73", 4)) {
 		pcbrev = get_pcb_rev(base_model);

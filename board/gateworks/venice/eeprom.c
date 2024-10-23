@@ -6,9 +6,12 @@
 #include <gsc.h>
 #include <hexdump.h>
 #include <i2c.h>
+#include <dm/device.h>
+#include <dm/device_compat.h>
 #include <dm/uclass.h>
 
 #include "eeprom.h"
+#include "../fsa.h"
 
 /* I2C */
 #define SOM_EEPROM_BUSNO		0
@@ -304,6 +307,8 @@ static int eeprom_info(bool verbose)
 		       base_info.mfgdate[0], base_info.mfgdate[1],
 		       base_info.mfgdate[2], base_info.mfgdate[3]);
 	}
+	if (verbose)
+		fsa_show();
 
 	return 0;
 }

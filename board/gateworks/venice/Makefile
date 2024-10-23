@@ -5,6 +5,7 @@
 #
 
 obj-y += venice.o eeprom.o
+obj-y += ../fsa.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
