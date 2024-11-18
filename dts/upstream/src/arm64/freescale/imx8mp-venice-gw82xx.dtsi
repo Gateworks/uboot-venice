@@ -116,9 +116,9 @@
 &gpio4 {
 	gpio-line-names =
 		"", "", "", "",
-		"", "", "", "",
+		"fsa2_gpio4", "", "", "",
 		"dio1", "fsa1_gpio2", "", "dio0",
-		"", "", "", "",
+		"", "", "fsa1_gpio4", "",
 		"", "", "", "",
 		"", "", "rs485_en", "rs485_term",
 		"fsa2_gpio2", "fsa1_gpio1", "", "rs485_half",
@@ -386,7 +386,7 @@
 
 	pinctrl_fsa1i2c: fsa1i2cgrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14	0x1d0		/* FSA1_ALERT# */
+			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14	0x400001d0	/* FSA1_GPIO4 */
 			MX8MP_IOMUXC_SAI2_TXC__GPIO4_IO25	0x400001d0	/* FSA1_GPIO1 */
 			MX8MP_IOMUXC_SAI1_RXD7__GPIO4_IO09	0x400001d0	/* FSA1_GPIO2 */
 		>;
@@ -394,7 +394,7 @@
 
 	pinctrl_fsa2i2c: fsa2i2cgrp {
 		fsl,pins = <
-			MX8MP_IOMUXC_SAI1_RXD2__GPIO4_IO04	0x1d0		/* FSA2_ALERT# */
+			MX8MP_IOMUXC_SAI1_RXD2__GPIO4_IO04	0x400001d0	/* FSA2_GPIO4 */
 			MX8MP_IOMUXC_GPIO1_IO13__GPIO1_IO13	0x400001d0	/* FSA2_GPIO1 */
 			MX8MP_IOMUXC_SAI2_TXFS__GPIO4_IO24	0x400001d0	/* FSA2_GPIO2 */
 		>;
