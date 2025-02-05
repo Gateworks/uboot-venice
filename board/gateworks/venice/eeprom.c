@@ -308,7 +308,7 @@ static int eeprom_info(bool verbose)
 	return 0;
 }
 
-int venice_eeprom_init(int quiet)
+struct venice_board_info *venice_eeprom_init(int quiet)
 {
 	char rev_pcb;
 	int rev_bom;
@@ -355,7 +355,7 @@ int venice_eeprom_init(int quiet)
 	if (!quiet)
 		eeprom_info(false);
 
-	return (16 << som_info.sdram_size);
+	return &som_info;
 }
 
 void board_gsc_info(void)
