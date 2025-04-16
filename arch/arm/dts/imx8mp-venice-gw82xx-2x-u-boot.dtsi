@@ -19,6 +19,13 @@
 		line-name = "dio0#";
 	};
 
+	usb1mux {
+		gpio-hog;
+		output-high;
+		gpios = <17 GPIO_ACTIVE_HIGH>;
+		line-name = "usb1_mux";
+	};
+
 	rs485_en {
 		gpio-hog;
 		output-low;
