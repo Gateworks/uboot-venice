@@ -435,8 +435,8 @@ int venice_eeprom_init(int quiet)
 		/* som */
 		rev_pcb = get_pcb_rev(som_info.model);
 		rev_bom = get_bom_rev(som_info.model);
-		venice_model[i++] = base_info.model[4];
-		venice_model[i++] = base_info.model[5];
+		venice_model[i++] = som_info.model[4];
+		venice_model[i++] = som_info.model[5];
 		venice_model[i++] = rev_pcb;
 		if (rev_bom)
 			venice_model[i++] = rev_bom;
