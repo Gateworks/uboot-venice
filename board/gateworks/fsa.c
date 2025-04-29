@@ -495,7 +495,7 @@ static int do_fsa_dev(struct cmd_tbl *cmdtp, int flag, int argc, char * const ar
 
 	if (argc < 2) {
 		/* list FSAs */
-		printf("detecting FSA's:\n");
+		printf("detecting FSA Adapters:\n");
 		for (i = 1; i < FSA_MAX; i++) {
 			if (!fsa_read_board_config(i, &board_info) && !fsa_read_user_config(i, &user_info))
 				printf("FSA%d    : %s %s\n", i, board_info.model, user_info.desc);
@@ -535,7 +535,7 @@ static int do_fsa_desc(struct cmd_tbl *cmdtp, int flag, int argc, char * const a
 		return CMD_RET_USAGE;
 	}
 
-	if (!fsa_read_board_config(fsa, &board_info) && !fsa_read_user_config(fsa, &user_info)) {
+	if (fsa_read_board_config(fsa, &board_info) || fsa_read_user_config(fsa, &user_info)) {
 		printf("can't detect FSA%d\n", fsa);
 		return CMD_RET_USAGE;
 	}
@@ -567,7 +567,7 @@ static int do_fsa_overlay(struct cmd_tbl *cmdtp, int flag, int argc, char * cons
 		return CMD_RET_USAGE;
 	}
 
-	if (!fsa_read_board_config(fsa, &board_info) && !fsa_read_user_config(fsa, &user_info)) {
+	if (fsa_read_board_config(fsa, &board_info) || fsa_read_user_config(fsa, &user_info)) {
 		printf("can't detect FSA%d\n", fsa);
 		return CMD_RET_USAGE;
 	}
@@ -682,8 +682,8 @@ static int do_fsa_gpio(struct cmd_tbl *cmdtp, int flag, int argc, char * const a
 static struct cmd_tbl cmd_fsa_sub[] = {
 	U_BOOT_CMD_MKENT(dev, 1, 1, do_fsa_dev, "", ""),
 	U_BOOT_CMD_MKENT(gpio, 4, 1, do_fsa_gpio, "", ""),
-	U_BOOT_CMD_MKENT(description, 4, 1, do_fsa_desc, "", ""),
-	U_BOOT_CMD_MKENT(overlay, 4, 1, do_fsa_overlay, "", ""),
+	U_BOOT_CMD_MKENT(description, 1, 1, do_fsa_desc, "", ""),
+	U_BOOT_CMD_MKENT(overlay, 1, 1, do_fsa_overlay, "", ""),
 };
 
 static int do_fsa(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
