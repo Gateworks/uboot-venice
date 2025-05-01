@@ -613,6 +613,11 @@ static int do_fsa_gpio(struct cmd_tbl *cmdtp, int flag, int argc, char * const a
 		return CMD_RET_SUCCESS;
 	}
 
+	if (!isdigit(argv[0][0])) {
+		printf("invalid gpio offset: %s\n", argv[0]);
+		return CMD_RET_USAGE;
+	}
+
 	memset(&desc, 0, sizeof(desc));
 	i = simple_strtoul(argv[0], NULL, 10);
 
