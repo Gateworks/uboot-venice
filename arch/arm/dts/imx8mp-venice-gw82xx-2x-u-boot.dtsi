@@ -47,3 +47,35 @@
 		line-name = "rs485_hd";
 	};
 };
+
+&i2c2 {
+	gpio@20 {
+		fsa1_card_pen {
+			gpio-hog;
+			output-high;
+			gpios = <2 GPIO_ACTIVE_HIGH>;
+			line-name = "fsa1_card_pen";
+		};
+
+		fsa2_card_pen {
+			gpio-hog;
+			output-high;
+			gpios = <3 GPIO_ACTIVE_HIGH>;
+			line-name = "fsa2_card_pen";
+		};
+
+		fsa2_present {
+			gpio-hog;
+			input;
+			gpios = <4 GPIO_ACTIVE_HIGH>;
+			line-name = "fsa2_present#";
+		};
+
+		fsa1_present {
+			gpio-hog;
+			input;
+			gpios = <5 GPIO_ACTIVE_HIGH>;
+			line-name = "fsa1_present#";
+		};
+	};
+};
