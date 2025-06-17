@@ -95,8 +95,3 @@
 		line-name = "pci_wdis#";
 	};
 };
-
-/* gpio-usb-con not supported yet in U-Boot so make this a host for now */
-&usb_dwc3_0 {
-	dr_mode = "host";
-};
