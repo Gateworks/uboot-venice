@@ -52,6 +52,11 @@ int board_phy_config(struct phy_device *phydev)
 	unsigned short val;
 
 	switch (phydev->phy_id) {
+	case 0x00221631: /* KSZ9897S port */
+		/* Configure LED MODE for single-LED taking into acccount errata #18 */
+		phy_write_mmd(phydev, 0x02, 0x00, 0x10);
+		phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0xfa00);
+		break;
 	case 0x2000a231: /* TI DP83867 GbE PHY */
 		puts("DP83867 ");
 		/* LED configuration */
