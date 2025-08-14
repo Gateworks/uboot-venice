@@ -3630,7 +3630,8 @@ struct dram_timing_info *spl_dram_init(const char *model, struct venice_board_in
 	/* apply ddrc/phy register changes for alternate dram bus layout */
 	if (!strncmp(model, "GW7902", 6) ||
 	    !strncmp(model, "GW7903", 6) ||
-	    !strncmp(model, "GW7904", 6)) {
+	    !strncmp(model, "GW7904", 6) ||
+	    !strncmp(model, "GW7906", 6)) {
 		apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
 				ddr_ddrc_cfg_alt_patch,
 				ARRAY_SIZE(ddr_ddrc_cfg_alt_patch));
