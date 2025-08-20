@@ -203,6 +203,9 @@ const char *eeprom_get_dtb_name(int level, char *buf, int sz)
 		+ ((som_info.model[3] - '0') * 100)
 		+ ((som_info.model[4] - '0') * 10)
 		+ (som_info.model[5] - '0');
+	/* use gw7903 dtb for gw7906 */
+	if (model == 7906)
+		model = 7903;
 	rev_pcb = tolower(get_pcb_rev(som_info.model));
 	rev_bom = get_bom_rev(som_info.model);
 

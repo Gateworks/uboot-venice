@@ -104,7 +104,8 @@ static void spl_dram_init(const char *model, int size)
 	/* apply ddrc/phy register changes for alternate dram bus layout */
 	if (!strncmp(model, "GW7902", 6) ||
 	    !strncmp(model, "GW7903", 6) ||
-	    !strncmp(model, "GW7904", 6)) {
+	    !strncmp(model, "GW7904", 6) ||
+	    !strncmp(model, "GW7906", 6)) {
 		apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
 				ddr_ddrc_cfg_alt_patch,
 				ARRAY_SIZE(ddr_ddrc_cfg_alt_patch));
@@ -206,7 +207,8 @@ static int power_init_board(const char *model)
 	else if ((!strncmp(model, "GW7901", 6)) ||
 		 (!strncmp(model, "GW7902", 6)) ||
 		 (!strncmp(model, "GW7903", 6)) ||
-		 (!strncmp(model, "GW7904", 6))) {
+		 (!strncmp(model, "GW7904", 6)) ||
+		 (!strncmp(model, "GW7906", 6))) {
 		if (!strncmp(model, "GW7902", 6))
 			ret = uclass_get_device_by_seq(UCLASS_I2C, 0, &bus);
 		else

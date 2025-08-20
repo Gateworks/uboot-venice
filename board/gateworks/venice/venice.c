@@ -8,6 +8,7 @@
 #include <led.h>
 #include <miiphy.h>
 #include <asm/arch/sys_proto.h>
+#include <dt-bindings/net/ti-dp83867.h>
 
 #include "eeprom.h"
 
@@ -200,6 +201,18 @@ int ft_board_setup(void *fdt, struct bd_info *bd)
 				reg[0] = cpu_to_fdt32(PCI_DEVFN(3, 0));
 				fdt_setprop(fdt, off, "reg", reg, sizeof(reg));
 			}
+		}
+	}
+
+	/* add dt props for TI PHY present on the GW7906 which we rename to GW7903 in case
+	 * Linux TI DP83867 PHY driver is enabled
+	 */
+	if (!strncmp(eeprom_get_model(), "GW7906", 6)) {
+		off = fdt_node_offset_by_compatible(fdt, -1, "ethernet-phy-ieee802.3-c22");
+		if (off > 0) {
+			printf("%s: adjusting dt to add RGMII delays for TI DP83867\n", eeprom_get_model());
+			fdt_setprop_u32(fdt, off, "ti,rx-internal-delay", DP83867_RGMIIDCTL_2_00_NS);
+			fdt_setprop_u32(fdt, off, "ti,tx-internal-delay", DP83867_RGMIIDCTL_2_00_NS);
 		}
 	}
 
