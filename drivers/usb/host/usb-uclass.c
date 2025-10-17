@@ -398,14 +398,10 @@ int usb_setup_ehci_gadget(struct ehci_ctrl **ctlrp)
 	struct udevice *dev;
 	int ret;
 
-	/* Find the old device and remove it */
+	/* Find the fist device */
 	ret = uclass_find_first_device(UCLASS_USB, &dev);
 	if (ret)
 		return ret;
-	ret = device_remove(dev, DM_REMOVE_NORMAL);
-	if (ret)
-		return ret;
-
 	plat = dev_get_plat(dev);
 	plat->init_type = USB_INIT_DEVICE;
 	ret = device_probe(dev);
