@@ -149,11 +149,13 @@
 #define PORT_SWITCH_ID_6097		0x0990
 #define PORT_SWITCH_ID_6172		0x1720
 #define PORT_SWITCH_ID_6176		0x1760
+#define PORT_SWITCH_ID_6190		0x1900
 #define PORT_SWITCH_ID_6220		0x2200
 #define PORT_SWITCH_ID_6240		0x2400
 #define PORT_SWITCH_ID_6250		0x2500
 #define PORT_SWITCH_ID_6320		0x1150
 #define PORT_SWITCH_ID_6352		0x3520
+#define PORT_SWITCH_ID_6361		0x2610
 
 struct mv88e6xxx_priv {
 	int smi_addr;
@@ -522,6 +524,23 @@ static int mv88e6xxx_priv_reg_offs_pre_init(struct udevice *dev)
 {
 	struct mv88e6xxx_priv *priv = dev_get_priv(dev);
 
+	/* if chip provided by driver data use this */
+	switch (dev_get_driver_data(dev)) {
+	case PORT_SWITCH_ID_6190:
+		priv->port_reg_base = 0;
+		priv->global1 = 0x1B;
+		priv->global2 = 0x1C;
+		priv->id = mv88e6xxx_get_switch_id(dev);
+		if (priv->id != 0xfff0)
+			return 0;
+		dev_warn(dev, "%s Unknown ID 0x%x\n", __func__, priv->id);
+		return -ENODEV;
+		break;
+	/* fall through to old detection below */
+	default:
+		break;
+	}
+
 	/*
 	 * Initial 'port_reg_base' value must be an offset of existing
 	 * port register, then reading the ID should succeed. First, try
@@ -779,6 +798,7 @@ static int mv88e6xxx_probe(struct udevice *dev)
 	case PORT_SWITCH_ID_6176:
 	case PORT_SWITCH_ID_6240:
 	case PORT_SWITCH_ID_6352:
+	case PORT_SWITCH_ID_6361:
 		priv->port_count = 11;
 		break;
 	case PORT_SWITCH_ID_6020:
@@ -816,6 +836,7 @@ static int mv88e6xxx_probe(struct udevice *dev)
 
 static const struct udevice_id mv88e6xxx_ids[] = {
 	{ .compatible = "marvell,mv88e6085" },
+	{ .compatible = "marvell,mv88e6190", .data = PORT_SWITCH_ID_6190 },
 	{ }
 };
 
