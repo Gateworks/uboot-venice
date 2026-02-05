@@ -84,35 +84,53 @@ static void fsa_show_gpio_descs(const char *prefix, int fsa, struct fsa_board_in
 	}
 }
 
+static int fsa_remove_gpiodev(int fsa, int addr)
+{
+	struct udevice *bus, *dev;
+	char gpio_name[32];
+	ofnode node;
+	int ret;
+
+	node = fsa_get_ofnode(fsa);
+	if (!ofnode_valid(node))
+		return -EINVAL;
+
+	ret = device_get_global_by_ofnode(node, &bus);
+	if (ret)
+		return ret;
+
+	sprintf(gpio_name, "gpio@%02x", addr);
+
+	/* if device is in dt remove/unbind/disable it */
+	ret = device_find_child_by_name(bus, gpio_name, &dev);
+	if (ret)
+		return ret;
+	ret = ofnode_set_enabled(dev_ofnode(dev), false);
+	if (ret)
+		return ret;
+	ret = device_unbind(dev);
+	if (ret)
+		return ret;
+	ret = device_remove(dev, DM_REMOVE_NORMAL);
+	if (ret)
+		return ret;
+	return ret;
+}
+
 /* detect gpio expander by address and deal with enabling/disabling/adding gpio expander to dt */
 static int fsa_get_gpiodev(int fsa, int addr, struct udevice **devp) {
 	struct udevice *bus, *dev;
-	char gpio_name[32];
 	int ret;
 
 	ret = device_get_global_by_ofnode(fsa_get_ofnode(fsa), &bus);
 	if (ret)
 		return ret;
 
-	sprintf(gpio_name, "gpio@%02x", addr);
-
 	/* probe device on i2c bus */
 	ret = dm_i2c_probe(bus, addr, 0, &dev);
 	switch (ret) {
 	case -EREMOTEIO: /* chip is not present on i2c bus */
-		/* if device is in dt remove/unbind/disable it */
-		ret = device_find_child_by_name(bus, gpio_name, &dev);
-		if (ret)
-			return ret;
-		ret = ofnode_set_enabled(dev_ofnode(dev), false);
-		if (ret)
-			return ret;
-		ret = device_unbind(dev);
-		if (ret)
-			return ret;
-		ret = device_remove(dev, DM_REMOVE_NORMAL);
-		if (ret)
-			return ret;
+		fsa_remove_gpiodev(fsa, addr);
 		return ret;
 	case -ENOSYS: /* chip found but driver invalid */
 		/* if device is in not in dt add/bind it */
@@ -307,16 +325,19 @@ static int fsa_write_user_config(int fsa, struct fsa_user_info *info)
 static int fsa_detect(int fsa, struct fsa_board_info *board_info, struct fsa_user_info *user_info, bool gpio)
 {
 	int ret;
+	int gpio_addr = 0x20;
 
 	ret = fsa_read_board_config(fsa, board_info);
-	if (ret)
+	if (ret) {
+		fsa_remove_gpiodev(fsa, gpio_addr);
 		return ret;
+	}
 	if (user_info) {
 		ret = fsa_read_user_config(fsa, user_info);
 		if (ret)
 			return ret;
-		/* detect port expander */
-		if (gpio && !fsa_get_gpiodev(fsa, 0x20, &fsa_gpiodevs[fsa]))
+		/* detect optional port expander and configure its gpios */
+		if (gpio && !fsa_get_gpiodev(fsa, gpio_addr, &fsa_gpiodevs[fsa]))
 			fsa_config_gpios(fsa, user_info, board_info->sockgpios + board_info->ioexpgpios, fsa_gpiodevs[fsa]);
 	}
 
