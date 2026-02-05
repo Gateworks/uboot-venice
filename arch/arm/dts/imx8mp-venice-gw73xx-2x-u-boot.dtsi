@@ -4,12 +4,6 @@
  */
 #include "imx8mp-venice-gw702x-u-boot.dtsi"
 
-&ethphy0 {
-	reset-gpios = <&gpio3 14 GPIO_ACTIVE_LOW>;
-	reset-delay-us = <1000>;
-	reset-post-delay-us = <300000>;
-};
-
 &gpio4 {
 	dio_1 {
 		gpio-hog;

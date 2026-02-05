@@ -4,3 +4,10 @@
  */
 
 #include "imx8mp-venice-u-boot.dtsi"
+
+&ethphy0 {
+	reset-gpios = <&gpio3 14 GPIO_ACTIVE_LOW>;
+	reset-assert-us = <1000>;
+	resert-deassert-us = <300000>;
+};
+
