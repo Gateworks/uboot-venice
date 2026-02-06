@@ -50,6 +50,8 @@
 
 &i2c2 {
 	gpio@20 {
+		status = "disabled";
+
 		fsa1_card_pen {
 			gpio-hog;
 			output-high;

@@ -35,4 +35,12 @@ uint32_t eeprom_get_serial(void);
 int get_bom_rev(const char *str);
 char get_pcb_rev(const char *str);
 
+/* bloblist for passing model data between SPl and U-Boot */
+struct board_info_blob {
+	char model[32];
+	char som_model[32];
+	char base_model[32];
+};
+#define BLOB_BOARD_INFO	(BLOBLISTT_PRIVATE_AREA + 0x100)
+
 #endif

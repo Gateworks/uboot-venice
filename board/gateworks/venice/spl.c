@@ -3,6 +3,7 @@
  * Copyright 2021 Gateworks Corporation
  */
 
+#include <bloblist.h>
 #include <cpu_func.h>
 #include <hang.h>
 #include <i2c.h>
@@ -369,5 +370,17 @@ const char *spl_board_loader_name(u32 boot_device)
 
 void spl_board_init(void)
 {
+	struct board_info_blob *info;
+
 	arch_misc_init();
+
+	/* add board info blob for early U-Boot model info */
+	info = bloblist_add(BLOB_BOARD_INFO, sizeof(struct board_info_blob), 0);
+	if (info) {
+		strcpy(info->model, eeprom_get_model());
+		strcpy(info->som_model, eeprom_get_som_model());
+		strcpy(info->base_model, eeprom_get_baseboard_model());
+		debug("populated board info bloblist:%s/%s/%s\n",
+		      info->model, info->som_model, info->base_model);
+	}
 }

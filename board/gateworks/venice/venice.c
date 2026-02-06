@@ -3,6 +3,7 @@
  * Copyright 2021 Gateworks Corporation
  */
 
+#include <bloblist.h>
 #include <fdt_support.h>
 #include <init.h>
 #include <led.h>
@@ -76,6 +77,26 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 #endif // IS_ENABLED(CONFIG_NET)
+
+/* Update live dt based on board model */
+int board_fix_fdt(void *blob)
+{
+	struct board_info_blob *info = bloblist_find(BLOB_BOARD_INFO, sizeof(struct board_info_blob));
+
+	debug("%s: board info bloblist:%s/%s/%s\n", __func__,
+	      info->model, info->som_model, info->base_model);
+
+	/* GW82xx-C+ - enable I2C2@0x20 io expander */
+	if (info && !strncmp(info->base_model, "GW82", 4) && get_pcb_rev(info->base_model) > 'B') {
+		int node;
+
+		debug("enable baseboard gpio@20 for %s\n", info->base_model);
+		node = fdt_path_offset(blob, "/soc@0/bus@30800000/i2c@30a30000/gpio@20");
+		if (node > 0)
+			fdt_setprop_string(blob, node, "status", "okay");
+	}
+	return 0;
+}
 
 int board_init(void)
 {
