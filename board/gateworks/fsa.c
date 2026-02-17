@@ -337,8 +337,10 @@ static int fsa_detect(int fsa, struct fsa_board_info *board_info, struct fsa_use
 		if (ret)
 			return ret;
 		/* detect optional port expander and configure its gpios */
-		if (gpio && !fsa_get_gpiodev(fsa, gpio_addr, &fsa_gpiodevs[fsa]))
+		if (gpio) {
+			fsa_get_gpiodev(fsa, gpio_addr, &fsa_gpiodevs[fsa]);
 			fsa_config_gpios(fsa, user_info, board_info->sockgpios + board_info->ioexpgpios, fsa_gpiodevs[fsa]);
+		}
 	}
 
 	return ret;
