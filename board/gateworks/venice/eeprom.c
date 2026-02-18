@@ -139,20 +139,23 @@ static int fsa_eeprom_read(const char *base, int fsa, struct fsa_board_info *inf
 	int ret;
 	u8 reg;
 
-	/* probe mux */
+	/* probe bus */
 	ret = uclass_get_device_by_seq(UCLASS_I2C, 2, &bus);
-	if (!ret)
-		ret = dm_i2c_probe(bus, 0x70, 0, &dev);
 	if (ret)
 		return ret;
-	/* steer mux */
-	if (!strncmp(base, "GW82", 4)) {
-		if (fsa < 3)
-			reg = (fsa == 1) ? BIT(1) : BIT(0);
-		else
-			return -EINVAL;
-	}
-	dm_i2c_write(dev, 0x00, &reg, 1);
+	/* probe bus */
+	ret = dm_i2c_probe(bus, 0x70, 0, &dev);
+	if (!ret) {
+		/* steer mux */
+		if (!strncmp(base, "GW82", 4)) {
+			if (fsa < 3)
+				reg = (fsa == 1) ? BIT(1) : BIT(0);
+			else
+				return -EINVAL;
+		}
+		dm_i2c_write(dev, 0x00, &reg, 1);
+	} else if (fsa > 1)
+		return -EINVAL;
 
 	/* get eeprom */
 	ret = dm_i2c_probe(bus, 0x54, 0, &dev);
