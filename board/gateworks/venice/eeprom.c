@@ -427,7 +427,7 @@ struct venice_board_info *venice_eeprom_init(int quiet)
 			venice_model[i++] = base_info.model[5];
 			venice_model[i++] = rev_pcb;
 			if (rev_bom)
-				venice_model[i++] = rev_bom;
+				venice_model[i++] = rev_bom + '0';
 			venice_model[i++] = '-';
 			venice_model[i++] = 'S';
 		} else {
@@ -442,7 +442,7 @@ struct venice_board_info *venice_eeprom_init(int quiet)
 		venice_model[i++] = som_info.model[5];
 		venice_model[i++] = rev_pcb;
 		if (rev_bom)
-			venice_model[i++] = rev_bom;
+			venice_model[i++] = rev_bom + '0';
 
 		/* fsa */
 		for (fsa = 1; fsa < FSA_MAX; fsa++) {
