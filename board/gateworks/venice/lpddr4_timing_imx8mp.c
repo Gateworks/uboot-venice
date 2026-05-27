@@ -2383,11 +2383,41 @@ static struct dram_timing_info dram_timing_4gb_dual_die = {
 
 extern struct dram_timing_info dram_timing_4gb_dual_die_1200mhz_16b;
 
+static void apply_cfg_patch(struct dram_cfg_param *cfg, int cfg_sz,
+			    struct dram_cfg_param *patch, int patch_sz)
+{
+	int i, j;
+
+	for (i = 0; i < cfg_sz; i++)
+		for (j = 0; j < patch_sz; j++)
+			if (cfg[i].reg == patch[j].reg)
+				cfg[i].val = patch[j].val;
+}
+
+/* 4GB single Die patch (MT53E1G32D2FW-046 revC) */
+static struct dram_cfg_param ddr_ddrc_cfg_4gb_single_die_patch[] = {
+	{ 0x3d400000, 0xa1080020 },
+	{ 0x3d400064, 0x7a017c },
+	{ 0x3d400138, 0x184 },
+	{ 0x3d400200, 0x1f },
+	{ 0x3d40021c, 0xf07 },
+	{ 0x3d402064, 0xc0026 },
+	{ 0x3d402138, 0x27 },
+	{ 0x3d403064, 0x3000a },
+	{ 0x3d403138, 0xa },
+};
+
+static struct dram_cfg_param fsp_msg_4gb_single_die_patch[] = {
+	{ 0x00054012, 0x110 },
+	{ 0x0005402c, 0x1 },
+};
+
 struct dram_timing_info *spl_dram_init(const char *model, struct venice_board_info *info,
 				       char *dram_desc, size_t sz_desc)
 {
 	struct dram_timing_info *dram_timing;
 	int sizemb = (16 << info->sdram_size);
+	int i;
 
 	switch (sizemb) {
 	case 1024:
@@ -2402,8 +2432,21 @@ struct dram_timing_info *spl_dram_init(const char *model, struct venice_board_in
 		break;
 	case 4096:
 		dram_timing = &dram_timing_4gb_dual_die;
-		if (dram_desc)
+		if (info->sdram_variant == 1) {
+			if (dram_desc)
+				strlcpy(dram_desc, "single-die", sz_desc);
+			apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
+					ddr_ddrc_cfg_4gb_single_die_patch,
+					ARRAY_SIZE(ddr_ddrc_cfg_4gb_single_die_patch));
+			for (i = 0; i < 4; i++) {
+				apply_cfg_patch(dram_timing->fsp_msg[i].fsp_cfg,
+						dram_timing->fsp_msg[i].fsp_cfg_num,
+						fsp_msg_4gb_single_die_patch,
+						ARRAY_SIZE(fsp_msg_4gb_single_die_patch));
+			}
+		} else if (dram_desc) {
 			strlcpy(dram_desc, "dual-die", sz_desc);
+		}
 		break;
 	default:
 		printf("unsupported");
