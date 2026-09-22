@@ -28,7 +28,7 @@
 
 	fsa1_card_pen {
 		gpio-hog;
-		input;
+		output-high;
 		gpios = <14 GPIO_ACTIVE_HIGH>;
 		line-name = "fsa1_card_pen";
 	};
