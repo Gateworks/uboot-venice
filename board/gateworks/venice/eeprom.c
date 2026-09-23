@@ -282,6 +282,8 @@ const char *eeprom_get_dtb_name(int level, char *buf, int sz)
 			snprintf(buf, sz, "%s%4d-%dx", pre, base, som);
 		}
 		switch (level) {
+		case -1: /* just base */
+			break;
 		case 0: /* full model (ie gw73xx-0x-a1a1) */
 			if (rev_base_bom)
 				snprintfcat(buf, sz, "-%c%d", rev_base_pcb, rev_base_bom);

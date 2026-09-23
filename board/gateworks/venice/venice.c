@@ -134,6 +134,8 @@ int board_late_init(void)
 		}
 		i++;
 	} while (str);
+	str = eeprom_get_dtb_name(-1, fdt, sizeof(fdt));
+	env_set("fdt_base", fdt);
 
 	/* Set mac addrs */
 	i = 0;
