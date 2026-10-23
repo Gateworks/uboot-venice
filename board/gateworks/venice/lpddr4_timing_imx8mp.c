@@ -2412,6 +2412,18 @@ static struct dram_cfg_param fsp_msg_4gb_single_die_patch[] = {
 	{ 0x0005402c, 0x1 },
 };
 
+/* 8GB quad-die patch (Kingston Q6422PM3BDGVK) */
+static struct dram_cfg_param ddr_ddrc_cfg_8gb_quad_die_patch[] = {
+	{ 0x3d400064, 0x7a017c },
+	{ 0x3d400138, 0x184 },
+	{ 0x3d400200, 0x18 },
+	{ 0x3d40021c, 0xf07 },
+	{ 0x3d402064, 0xc0026 },
+	{ 0x3d402138, 0x27 },
+	{ 0x3d403064, 0x3000a },
+	{ 0x3d403138, 0xa },
+};
+
 struct dram_timing_info *spl_dram_init(const char *model, struct venice_board_info *info,
 				       char *dram_desc, size_t sz_desc)
 {
@@ -2447,6 +2459,14 @@ struct dram_timing_info *spl_dram_init(const char *model, struct venice_board_in
 		} else if (dram_desc) {
 			strlcpy(dram_desc, "dual-die", sz_desc);
 		}
+		break;
+	case 8192:
+		dram_timing = &dram_timing_4gb_dual_die;
+		if (dram_desc)
+			strlcpy(dram_desc, "quad-die", sz_desc);
+		apply_cfg_patch(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num,
+				ddr_ddrc_cfg_8gb_quad_die_patch,
+				ARRAY_SIZE(ddr_ddrc_cfg_8gb_quad_die_patch));
 		break;
 	default:
 		printf("unsupported");
