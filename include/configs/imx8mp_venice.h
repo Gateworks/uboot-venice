@@ -26,11 +26,11 @@
 #define CFG_SYS_INIT_RAM_ADDR        0x40000000
 #define CFG_SYS_INIT_RAM_SIZE        SZ_2M
 
-/* SDRAM configuration: 4GiB */
+/* SDRAM configuration: 8GiB */
 #define CFG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                   0x40000000
-#define PHYS_SDRAM_SIZE              0x80000000      /* 2 GB */
-#define PHYS_SDRAM_2                 0xC0000000
-#define PHYS_SDRAM_2_SIZE            0x80000000      /* 2 GB */
+#define PHYS_SDRAM_SIZE              0xc0000000      /* 3 GB Bank 1 */
+#define PHYS_SDRAM_2                 0x100000000
+#define PHYS_SDRAM_2_SIZE            0x140000000     /* 5 GB Bank 2 */
 
 #endif
